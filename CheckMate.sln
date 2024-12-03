@@ -1,0 +1,30 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.12.35514.174 d17.12
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CheckMate.API", "CheckMate.API\CheckMate.API.csproj", "{2A24B1D3-4371-4599-A0A4-551AF406E5C7}"
+EndProject
+Project("{00D1A9C2-B5F0-4AF3-8072-F6C62B433612}") = "CheckMate.DB", "CheckMate.DB\CheckMate.DB.sqlproj", "{F18CADCE-0411-4D26-A124-7FF851215F84}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{2A24B1D3-4371-4599-A0A4-551AF406E5C7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2A24B1D3-4371-4599-A0A4-551AF406E5C7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2A24B1D3-4371-4599-A0A4-551AF406E5C7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2A24B1D3-4371-4599-A0A4-551AF406E5C7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F18CADCE-0411-4D26-A124-7FF851215F84}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F18CADCE-0411-4D26-A124-7FF851215F84}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F18CADCE-0411-4D26-A124-7FF851215F84}.Debug|Any CPU.Deploy.0 = Debug|Any CPU
+		{F18CADCE-0411-4D26-A124-7FF851215F84}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F18CADCE-0411-4D26-A124-7FF851215F84}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F18CADCE-0411-4D26-A124-7FF851215F84}.Release|Any CPU.Deploy.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
