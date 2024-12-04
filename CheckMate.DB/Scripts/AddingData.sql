@@ -17,3 +17,11 @@ INSERT INTO [Role] ([Id], [Name]) VALUES
             (2, 'Admin')
 
 SET IDENTITY_INSERT [Role] OFF
+
+
+SET IDENTITY_INSERT [User] ON
+
+INSERT INTO [User]([Id], [Username], [Email], [Password], [Salt], [Date_of_birth], [Gender], [Elo], [RoleId]) VALUES
+            (1, 'm.checkmate', 'checkmate@checkmate.com', '$argon2id$v=19$m=65536,t=3,p=1$SMleJAg6gemG+JJfSzFiow$u7INNdtHM9r2MtezG7lMGOED2vhAflP7vnsd7FxjBNc', 'afcba622-6259-4bc5-babd-228c2dc8afe5', '1972-12-23 00:00:00.000', 'M', 1200, 2);
+
+SET IDENTITY_INSERT [User] OFF
