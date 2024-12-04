@@ -1,8 +1,5 @@
 ﻿using CheckMate.Domain.Models;
 using System.ComponentModel.DataAnnotations;
-using static System.Runtime.InteropServices.JavaScript.JSType;
-using System.Diagnostics.Metrics;
-using System.Linq.Expressions;
 
 namespace CheckMate.API.DTO
 {
@@ -57,5 +54,29 @@ namespace CheckMate.API.DTO
         [Required]
         [RegularExpression(@"^[MFO]$", ErrorMessage = @"Genre doit être soit 'M', soit 'F' soit 'O'")]
         public string Gender { get; set; }
+    }
+
+    public class UserAdminRegistrationForm
+    {
+        [Required]
+        [EmailAddress]
+        [MaxLength(255)]
+        public string Email { get; set; }
+
+        [Required]
+        [DataType(DataType.Date)]
+        public DateTime DateOfBirth { get; set; }
+
+        [Required]
+        [RegularExpression(@"^[MFO]$", ErrorMessage = @"Genre doit être soit 'M', soit 'F' soit 'O'")]
+        public string Gender { get; set; }
+    }
+
+    public class UserChooseUsernameForm
+    {
+        [Required]
+        [MinLength(3)]
+        [MaxLength(100)]
+        public string Username { get; set; }
     }
 }
