@@ -1,5 +1,6 @@
 using ChackMate.BLL.Interfaces;
 using ChackMate.BLL.Services;
+using CheckMate.BLL.Interfaces;
 using CheckMate.BLL.Services;
 using CheckMate.DAL.Interfaces;
 using CheckMate.DAL.Repositories;
@@ -19,6 +20,11 @@ builder.Services.AddTransient<SqlConnection>(c => new SqlConnection(builder.Conf
 
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IUserService, UserService>();
+
+builder.Services.AddScoped<ITournamentRepository, TournamentRepository>();
+builder.Services.AddScoped<ITournamentService, TournamentService>();
+
+builder.Services.AddScoped<ITournamentCategoryRepository, TournamentCategoryRepository>();
 
 builder.Services.AddScoped<IRoleRepository, RoleRepository>();
 

@@ -1,0 +1,9 @@
+﻿CREATE TABLE [Game]
+(
+	[Id] INT IDENTITY,
+	[TournamentId] INT NOT NULL,
+	[WhiteId] INT NOT NULL,
+	[BlackId] INT NOT NULL,
+	[Round] TINYINT NOT NULL,
+	[Winner] TINYINT NOT NULL DEFAULT 1,
+)

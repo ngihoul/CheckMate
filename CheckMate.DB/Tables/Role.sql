@@ -1,4 +1,4 @@
-﻿CREATE TABLE [dbo].[Role]
+﻿CREATE TABLE [Role]
 (
 	[Id] INT IDENTITY,
 	[Name] NVARCHAR(100) NOT NULL

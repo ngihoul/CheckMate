@@ -62,6 +62,11 @@
   <ItemGroup>
     <Build Include="Tables\User.sql" />
     <Build Include="Tables\Role.sql" />
+    <Build Include="Tables\Tournament.sql" />
+    <Build Include="Tables\Tournament_category.sql" />
+    <Build Include="Tables\MM_Tournament_Registration.sql" />
+    <Build Include="Tables\MM_Tournament_Category.sql" />
+    <Build Include="Tables\Game.sql" />
   </ItemGroup>
   <ItemGroup>
     <None Include="CheckMate.DB.publish.xml" />
