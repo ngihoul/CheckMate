@@ -57,9 +57,16 @@
   <ItemGroup>
     <Folder Include="Properties" />
     <Folder Include="Tables" />
+    <Folder Include="Scripts" />
   </ItemGroup>
   <ItemGroup>
     <Build Include="Tables\User.sql" />
     <Build Include="Tables\Role.sql" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="CheckMate.DB.publish.xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <PostDeploy Include="Scripts\AddingData.sql" />
   </ItemGroup>
 </Project>
