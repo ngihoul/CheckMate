@@ -1,5 +1,4 @@
 ﻿using ChackMate.BLL.Interfaces;
-using ChackMate.BLL.Services;
 using CheckMate.API.DTO;
 using CheckMate.API.Mappers;
 using CheckMate.Domain.Models;
@@ -21,7 +20,8 @@ namespace CheckMate.API.Controllers
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public ActionResult<UserView> Create([FromBody] UserSelfRegistrationForm userForm) {
+        public async Task<ActionResult<UserView>> Create([FromBody] UserSelfRegistrationForm userForm)
+        {
             try
             {
                 if (userForm is null || !ModelState.IsValid)
@@ -29,12 +29,42 @@ namespace CheckMate.API.Controllers
                     return BadRequest(new { message = "Données invalides" });
                 }
 
-                User? userToAdd = _userService.Create(userForm.ToUser());
+                User? userToAdd = await _userService.Create(userForm.ToUser());
 
                 return Ok(userToAdd.ToView());
-            } catch(Exception ex)
+            }
+            catch (Exception ex)
             {
-                return BadRequest(new { message = ex.Message });
+                return StatusCode(500, new { message = ex.Message });
+            }
+        }
+
+        [HttpPatch("api/username/{id}")]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<ActionResult<UserView?>> ChooseUsername([FromRoute] int id, [FromBody] UserChooseUsernameForm userForm)
+        {
+            try
+            {
+                if (userForm is null || !ModelState.IsValid)
+                {
+                    return BadRequest(new { message = "Données invalides" });
+                }
+
+                User? userToPatch = await _userService.ChooseUsername(id, userForm.ToUser());
+
+                if (userToPatch is null)
+                {
+                    return NotFound(new { message = "Utilisateur non trouvé" });
+                }
+
+                return Ok(userToPatch.ToView());
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = ex.Message });
             }
         }
     }

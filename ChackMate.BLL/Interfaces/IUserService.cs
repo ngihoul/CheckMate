@@ -4,6 +4,8 @@ namespace ChackMate.BLL.Interfaces
 {
     public interface IUserService
     {
-        public User? Create(User user);
+        public Task<User?> Create(User user);
+        public Task<User?> CreateByAdmin(User user);
+        public Task<User?> ChooseUsername(int id, User user);
     }
 }

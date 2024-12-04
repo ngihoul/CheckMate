@@ -1,6 +1,7 @@
 ﻿using CheckMate.DAL.Interfaces;
 using CheckMate.Domain.Models;
 using Microsoft.Data.SqlClient;
+using CheckMate.DAL.Mappers;
 
 namespace CheckMate.DAL.Repositories
 {
@@ -14,104 +15,174 @@ namespace CheckMate.DAL.Repositories
             _connection = connection;
         }
 
-        public User? Create(User user)
+        public async Task<User?> Create(User user)
         {
-            using SqlCommand command = _connection.CreateCommand();
-
-            command.CommandText = "INSERT INTO [User] (Username, Email, Password, Salt, Date_of_birth, Gender, Elo, Role) " +
-                                  "OUTPUT INSERTED.Id " +      
-                                  "VALUES (@Username, @Email, @Password, @Salt, @DateOfBirth, @Gender, @Elo, @RoleId)";
-
-            command.Parameters.AddWithValue("Username", user.Username);
-            command.Parameters.AddWithValue("Email", user.Email);
-            command.Parameters.AddWithValue("Password", user.Password);
-            command.Parameters.AddWithValue("Salt", user.Salt);
-            command.Parameters.AddWithValue("DateOfBirth", user.DateOfBirth);
-            command.Parameters.AddWithValue("Gender", user.Gender);
-            command.Parameters.AddWithValue("Elo", user.Elo);
-            command.Parameters.AddWithValue("RoleId", user.Role.Id);
-
-            _connection.Open();
-
-            user.Id = (int)command.ExecuteScalar();
-
-            _connection.Close();
-
-            return user;
-        }
-
-        public User? GetByEmail(string email) 
-        { 
-            SqlCommand command = _connection.CreateCommand();
-
-            command.CommandText = "SELECT * FROM [User] WHERE Email = @Email";
-            // JOINTURE AVEC ALIASES
-
-            command.Parameters.AddWithValue("Email", email);
-
-            _connection.Open();
-
-            using SqlDataReader reader = command.ExecuteReader();
-
-            User? user = null;
-
-            if(reader.Read())
+            try
             {
-                user = new User
-                {
-                    Id = (int)reader["Id"],
-                    Username = (string)reader["Username"],
-                    Email = (string)reader["Email"],
-                    Password = (string)reader["Password"],
-                    Salt = (string)reader["Salt"],
-                    DateOfBirth = (DateTime)reader["Date_of_birth"],
-                    Gender = Convert.ToChar(reader["Gender"]),
-                    Elo = (int)reader["Elo"],
-                    Role = new Role
-                    {
-                        Id = (int)reader["RoleId"],
-                        Name = (string)reader["RoleName"]
-                    }
-                };
+                SqlCommand command = _connection.CreateCommand();
+
+                command.CommandText = "INSERT INTO [User] (Username, Email, Password, Salt, Date_of_birth, Gender, Elo, RoleId) " +
+                                      "OUTPUT INSERTED.Id " +
+                                      "VALUES (@Username, @Email, @Password, @Salt, @DateOfBirth, @Gender, @Elo, @RoleId)";
+
+                command.Parameters.AddWithValue("Username", user.Username is null ? DBNull.Value : user.Username);
+                command.Parameters.AddWithValue("Email", user.Email);
+                command.Parameters.AddWithValue("Password", user.Password);
+                command.Parameters.AddWithValue("Salt", user.Salt);
+                command.Parameters.AddWithValue("DateOfBirth", user.DateOfBirth);
+                command.Parameters.AddWithValue("Gender", user.Gender);
+                command.Parameters.AddWithValue("Elo", user.Elo);
+                command.Parameters.AddWithValue("RoleId", user.Role.Id);
+
+                await _connection.OpenAsync();
+
+                user.Id = (int)await command.ExecuteScalarAsync();
+
+                await _connection.CloseAsync();
+
+                return user;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message, ex);
             }
 
-            _connection.Close();
-
-            return user;
         }
 
-        public User? GetByUsername(string username)
+        public async Task<User?> GetByEmail(string email)
         {
-            SqlCommand command = _connection.CreateCommand();
+            try
+            {
+                SqlCommand command = _connection.CreateCommand();
 
-            command.CommandText = "SELECT * FROM [User] WHERE Username = @Username";
+                command.CommandText = "SELECT [U].[Id], [U].[Username], [U].[Email], [U].[Date_of_birth], [U].[Gender], [U].[Elo], [U].[RoleId], [R].[Id] AS [RoleId], [R].[Name] AS [RoleName] FROM [User] AS U " +
+                                      "JOIN [Role] AS R ON [U].[RoleId] = [R].[Id] " +
+                                      "WHERE Email = @Email";
 
-            command.Parameters.AddWithValue("Username", username);
+                command.Parameters.AddWithValue("Email", email);
 
-            _connection.Open();
+                await _connection.OpenAsync();
 
-            using SqlDataReader reader = command.ExecuteReader();
+                using SqlDataReader reader = await command.ExecuteReaderAsync();
 
-            User? user = null;
+                User? user = null;
 
-            if(reader.Read()) {
-                user = new User
+                if (await reader.ReadAsync())
                 {
-                    Id = (int)reader["Id"],
-                    Username = (string)reader["Username"],
-                    Email = (string)reader["Email"],
-                    Password = (string)reader["Password"],
-                    Salt = (string)reader["Salt"],
-                    DateOfBirth = (DateTime)reader["Date_of_birth"],
-                    Gender = Convert.ToChar(reader["Gender"]),
-                    Elo = (int)reader["Elo"],
-                    Role = (Role)reader["Role"]
-                };
+                    user = UserMappers.UserWithRole(reader);
+                }
+
+                await _connection.CloseAsync();
+
+                return user;
+            }
+            catch (Exception ex)
+            {
+
+                throw new Exception(ex.Message, ex);
+            }
+        }
+
+        public async Task<User?> GetByUsername(string username)
+        {
+            try
+            {
+                if (username is null)
+                {
+                    return null;
+                }
+
+                SqlCommand command = _connection.CreateCommand();
+
+                command.CommandText = "SELECT [U].[Id], [U].[Username], [U].[Email], [U].[Date_of_birth], [U].[Gender], [U].[Elo], [R].[Id] AS [RoleId], [R].[Name] AS [RoleName] FROM [User] AS U " +
+                                      "JOIN [Role] AS R ON [U].[RoleId] = [R].[Id] " +
+                                      "WHERE Username = @Username";
+
+                command.Parameters.AddWithValue("Username", username);
+
+                await _connection.OpenAsync();
+
+                using SqlDataReader reader = command.ExecuteReader();
+
+                User? user = null;
+
+                if (reader.Read())
+                {
+                    user = UserMappers.UserWithRole(reader);
+                }
+
+                await _connection.CloseAsync();
+
+                return user;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message, ex);
             }
 
-            _connection.Close();
+        }
 
-            return user;
+        public async Task<User?> GetById(int id)
+        {
+            try
+            {
+                if (id == 0)
+                {
+                    return null;
+                }
+
+                SqlCommand command = _connection.CreateCommand();
+
+                command.CommandText = "SELECT [U].[Id], [U].[Username], [U].[Email], [U].[Date_of_birth], [U].[Gender], [U].[Elo], [R].[Id] AS [RoleId], [R].[Name] AS [RoleName] FROM [User] AS U " +
+                                      "JOIN [Role] AS R ON [U].[RoleId] = [R].[Id] " +
+                                      "WHERE [U].[Id] = @id";
+
+                command.Parameters.AddWithValue("id", id);
+
+                await _connection.OpenAsync();
+
+                using SqlDataReader reader = command.ExecuteReader();
+
+                User? user = null;
+
+                if (reader.Read())
+                {
+                    user = UserMappers.UserWithRole(reader);
+                }
+
+                await _connection.CloseAsync();
+
+                return user;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message, ex);
+            }
+
+        }
+
+        public async Task<User?> Patch(User user)
+        {
+            try
+            {
+                using SqlCommand command = _connection.CreateCommand();
+                command.CommandText = @"UPDATE [User] 
+                                        SET Username = @Username 
+                                        WHERE Id = @Id";
+
+                command.Parameters.AddWithValue("@Id", user.Id);
+                command.Parameters.AddWithValue("@Username", user.Username);
+
+                await _connection.OpenAsync();
+                int rowsAffected = command.ExecuteNonQuery();
+                await _connection.CloseAsync();
+
+                return rowsAffected > 0 ? user : null;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message, ex);
+            }
         }
     }
 }

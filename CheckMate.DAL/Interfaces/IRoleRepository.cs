@@ -4,6 +4,6 @@ namespace CheckMate.DAL.Interfaces
 {
     public interface IRoleRepository
     {
-        public Role? GetByName(string name);
+        public Task<Role?> GetByName(string name);
     }
 }

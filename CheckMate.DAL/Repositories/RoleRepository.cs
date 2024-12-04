@@ -1,11 +1,6 @@
 ﻿using CheckMate.DAL.Interfaces;
 using CheckMate.Domain.Models;
 using Microsoft.Data.SqlClient;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace CheckMate.DAL.Repositories
 {
@@ -18,7 +13,7 @@ namespace CheckMate.DAL.Repositories
             _connection = connection;
         }
 
-        public Role? GetByName(string name)
+        public async Task<Role?> GetByName(string name)
         {
             using SqlCommand command = _connection.CreateCommand();
 
@@ -26,11 +21,11 @@ namespace CheckMate.DAL.Repositories
 
             command.Parameters.AddWithValue("Name", name);
 
-            _connection.Open();
+            await _connection.OpenAsync();
 
             Role? role = null;
 
-            using SqlDataReader reader = command.ExecuteReader();
+            using SqlDataReader reader = await command.ExecuteReaderAsync();
 
             if(reader.Read()) {
                 role = new Role
@@ -40,7 +35,7 @@ namespace CheckMate.DAL.Repositories
                 };
             }
 
-             _connection.Close();
+             await _connection.CloseAsync();
 
             return role;
         }
