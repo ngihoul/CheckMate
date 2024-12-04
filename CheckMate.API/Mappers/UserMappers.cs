@@ -17,6 +17,24 @@ namespace CheckMate.API.Mappers
             };
         }
 
+        public static User ToUser(this UserAdminRegistrationForm userForm)
+        {
+            return new User
+            {
+                Email = userForm.Email,
+                DateOfBirth = userForm.DateOfBirth,
+                Gender = Convert.ToChar(userForm.Gender)
+            };
+        }
+        public static User ToUser(this UserChooseUsernameForm userForm)
+        {
+            return new User
+            {
+                Username = userForm.Username
+            };
+        }
+
+
         public static UserView ToView(this User user)
         {
             return new UserView
