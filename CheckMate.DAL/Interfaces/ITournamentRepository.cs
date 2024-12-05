@@ -9,6 +9,10 @@ namespace CheckMate.DAL.Interfaces
 {
     public interface ITournamentRepository
     {
+        public Task<Tournament>? GetById(int id);
+        public Task<List<Tournament>> GetLast();
         public Task<Tournament>? Create(Tournament tournament);
+        
+        public Task<bool> Delete(Tournament tournament); 
     }
 }

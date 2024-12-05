@@ -40,9 +40,25 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+
 app.UseHttpsRedirection();
 
 app.UseAuthorization();
+
+
+app.Use(async (context, next) =>
+{
+    try
+    {
+        await next.Invoke();
+    }
+    catch (Exception e)
+    {
+        context.Response.StatusCode = 404;
+        await context.Response.WriteAsJsonAsync(e.Message);
+    }
+});
+
 
 app.MapControllers();
 

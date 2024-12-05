@@ -16,6 +16,11 @@ namespace CheckMate.BLL.Services
             _tournamentRepository = tournamentRepository;
         }
 
+        public async Task<List<Tournament>> GetLast()
+        {
+            return await _tournamentRepository.GetLast();
+        }
+
         public async Task<Tournament>? Create(Tournament tournament, List<int> categoriesIds)
         {
             try
@@ -38,12 +43,41 @@ namespace CheckMate.BLL.Services
                 }
 
                 List<TournamentCategory> categories = await _categoryRepository.GetAll();
-                
+
                 tournament.Categories = categories.Where(c => categoriesIds.Contains(c.Id)).ToList();
 
                 // TODO : A la création d’un tournoi un email est envoyé à tous les joueurs qui respectent les contraintes du tournoi(v.inscriptions) pour les prévenir
 
                 return await _tournamentRepository.Create(tournament);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
+        }
+
+        public async Task<bool> Delete(int id)
+        {
+            try
+            {
+                Tournament? tournamentToDelete = await _tournamentRepository.GetById(id);
+
+                if (tournamentToDelete is null)
+                {
+                    throw new Exception("Le tournoi n'existe pas");
+                }
+
+                if(tournamentToDelete.EndRegistration < DateTime.Now)
+                {
+                    throw new Exception("Les inscriptions étant terminées, il n'est pas possible d'annuler le tournoi");
+                }
+                
+                if(tournamentToDelete.Cancelled == true)
+                {
+                    throw new Exception("Le tournoi a deja ete annulé");
+                }
+
+                return await _tournamentRepository.Delete(tournamentToDelete);
             }
             catch (Exception ex)
             {

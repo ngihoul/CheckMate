@@ -1,12 +1,7 @@
 ﻿using CheckMate.DAL.Interfaces;
+using CheckMate.DAL.Mappers;
 using CheckMate.Domain.Models;
 using Microsoft.Data.SqlClient;
-using System;
-using System.Collections.Generic;
-using System.Data.SqlTypes;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace CheckMate.DAL.Repositories
 {
@@ -30,7 +25,7 @@ namespace CheckMate.DAL.Repositories
 
             SqlDataReader reader = await command.ExecuteReaderAsync();
 
-            while(reader.Read())
+            while (reader.Read())
             {
                 categories.Add(
                     new TournamentCategory()
@@ -39,10 +34,42 @@ namespace CheckMate.DAL.Repositories
                         Name = (string)reader["Name"],
                         Rules = (string)reader["Rules"]
                     }
-                ); 
+                );
             }
 
             await _connection.CloseAsync();
+
+            return categories;
+        }
+
+        public async Task<List<TournamentCategory>> GetByTournament(int tournamentId)
+        {
+
+            List<TournamentCategory> categories = new List<TournamentCategory>();
+
+            SqlCommand command = _connection.CreateCommand();
+
+            command.CommandText = "SELECT * FROM [MM_Tournament_Category] AS TC " +
+                                  "JOIN [Tournament_category] AS C ON TC.CategoryId = C.Id " +
+                                  "WHERE TC.TournamentId = @tournamentId";
+
+            command.Parameters.AddWithValue("tournamentId", tournamentId);
+
+            await _connection.OpenAsync();
+
+
+            using SqlDataReader reader = await command.ExecuteReaderAsync();
+
+            while (reader.Read())
+            {
+                categories.Add(
+                    TournamentCategoryMappers.TournamentCategory(reader)
+                );
+            }
+
+
+            await _connection.CloseAsync();
+
 
             return categories;
         }

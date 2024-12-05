@@ -16,7 +16,7 @@
         public DateTime EndRegistration { get; set; } // >= created_at + min_players
         public DateTime? CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
-        public bool? Cancelled { get; set; } = false;
+        public bool Cancelled { get; set; } = false;
         public DateTime? CancelledAt { get; set; }
         public List<User>? Players { get; set; }
         // public List<Games>? Games { get; set; }

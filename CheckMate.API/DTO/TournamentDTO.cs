@@ -29,19 +29,15 @@ namespace CheckMate.API.DTO
         public int Id { get; set; }
         public string Name { get; set; }
         public string? Place { get; set; }
+        public int NbPlayers { get; set; }
         public int MinPlayers { get; set; }
         public int MaxPlayers { get; set; }
+        public List<TournamentCategory>? Categories { get; set; }
         public int? MinElo { get; set; }
         public int? MaxElo { get; set; }
-        public List<TournamentCategory>? Categories { get; set; }
         public int? Status { get; set; }
         public int? CurrentRound { get; set; }
-        public bool WomenOnly { get; set; } = false;
         public DateTime EndRegistration { get; set; }
-        public DateTime? CreatedAt { get; set; }
-        public DateTime? UpdatedAt { get; set; }
-        public bool? Cancelled { get; set; }
-        public DateTime? CancelledAt { get; set; }
     }
 
     public class TournamentCreateForm

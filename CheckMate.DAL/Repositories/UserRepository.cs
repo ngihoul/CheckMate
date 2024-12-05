@@ -23,7 +23,7 @@ namespace CheckMate.DAL.Repositories
 
                 command.CommandText = "INSERT INTO [User] (Username, Email, Password, Salt, Date_of_birth, Gender, Elo, RoleId) " +
                                       "OUTPUT INSERTED.Id " +
-                                      "VALUES (@Username, @Email, @Password, @Salt, @DateOfBirth, @Gender, @Elo, @RoleId)";
+                                      "VALUES (@Username, @Email, @Password, @Salt, @DateOfBirth, @Gender, @Elo, 1)";
 
                 command.Parameters.AddWithValue("Username", user.Username is null ? DBNull.Value : user.Username);
                 command.Parameters.AddWithValue("Email", user.Email);
@@ -32,7 +32,6 @@ namespace CheckMate.DAL.Repositories
                 command.Parameters.AddWithValue("DateOfBirth", user.DateOfBirth);
                 command.Parameters.AddWithValue("Gender", user.Gender);
                 command.Parameters.AddWithValue("Elo", user.Elo);
-                command.Parameters.AddWithValue("RoleId", user.Role.Id);
 
                 await _connection.OpenAsync();
 
@@ -126,9 +125,9 @@ namespace CheckMate.DAL.Repositories
         {
             try
             {
-                if (id == 0)
+                if (id <= 0)
                 {
-                    return null;
+                    throw new Exception("L'Id n'existe pas");
                 }
 
                 SqlCommand command = _connection.CreateCommand();

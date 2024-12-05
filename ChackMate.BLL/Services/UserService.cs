@@ -5,6 +5,7 @@ using CheckMate.Domain.Models;
 
 namespace ChackMate.BLL.Services
 {
+    // TODO : try .. catch ... pas utile.
     public class UserService : IUserService
     {
         private readonly IUserRepository _userRepository;
@@ -58,9 +59,6 @@ namespace ChackMate.BLL.Services
 
                 user.Password = _authService.HashPassword(user.Password, user.Salt);
 
-                // QUESTION : Est-ce une bonne idée d'ajouter le rôle à ce niveau ?
-                user.Role = await _roleRepository.GetByName("User")!;
-
                 User userToAdd = await _userRepository.Create(user);
 
                 // Send mail to user with password
@@ -68,6 +66,7 @@ namespace ChackMate.BLL.Services
 
                 return userToAdd;
             }
+            // catch ArgumentException
             catch (Exception ex)
             {
                 throw new Exception($"Erreur lors de la création de l'utilisateur : {ex.Message}");

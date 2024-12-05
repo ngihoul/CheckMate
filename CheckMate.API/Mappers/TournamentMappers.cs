@@ -44,5 +44,23 @@ namespace CheckMate.API.Mappers
                 CancelledAt = tournament.CancelledAt
             };
         }
+
+        public static TournamentView ToViewList(this Tournament tournament)
+        {
+            return new TournamentView
+            {
+                Id = tournament.Id,
+                Name = tournament.Name,
+                Place = tournament.Place,
+                MinPlayers = tournament.MinPlayers,
+                MaxPlayers = tournament.MaxPlayers,
+                Categories = tournament.Categories,
+                MinElo = tournament.MinElo,
+                MaxElo = tournament.MaxElo,
+                Status = tournament.Status,
+                CurrentRound = tournament.CurrentRound,
+                EndRegistration = tournament.EndRegistration,
+            };
+        }
     }
 }

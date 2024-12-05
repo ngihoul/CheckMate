@@ -9,6 +9,8 @@ namespace CheckMate.BLL.Interfaces
 {
     public interface ITournamentService
     {
+        public Task<List<Tournament>> GetLast();
         public Task<Tournament>? Create(Tournament tournament, List<int> categoriesIds);
+        public Task<bool> Delete(int id);
     }
 }
