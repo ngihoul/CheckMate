@@ -16,9 +16,26 @@ namespace CheckMate.BLL.Services
             _tournamentRepository = tournamentRepository;
         }
 
-        public async Task<List<Tournament>> GetLast()
+        public async Task<Tournament>? GetById(int id)
         {
-            return await _tournamentRepository.GetLast();
+            if(id <= 0)
+            {
+                throw new ArgumentException("L'id du tournoi doit etre superieur a zéro");
+            }
+
+            Tournament? tournament = await _tournamentRepository.GetById(id);
+
+            if(tournament is null || tournament.Cancelled == true)
+            {
+                throw new ArgumentException("Le tournoi n'existe pas");
+            }
+
+            return tournament;
+        }
+
+        public async Task<List<Tournament>> GetLast(TournamentFilters filters)
+        {
+            return await _tournamentRepository.GetLast(filters);
         }
 
         public async Task<Tournament>? Create(Tournament tournament, List<int> categoriesIds)

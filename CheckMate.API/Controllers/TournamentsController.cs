@@ -19,15 +19,29 @@ namespace CheckMate.API.Controllers
             _tournamentService = tournamentService;
         }
 
+        [HttpGet("{id:int}")]
+        public async Task<ActionResult<TournamentView>> Get([FromRoute] int id)
+        {
+            Tournament tournament = await _tournamentService.GetById(id);
+
+            if(tournament is null)
+            {
+                throw new ArgumentException("Tournoi non trouvé");
+            }
+
+            return Ok(tournament.ToView());
+        }
+
         [HttpGet]
         [Route("/api/tournaments/last")]
-        public async Task<ActionResult<List<TournamentViewList>>> GetLastTournament()
+        // TODO : check possible response codes
+        public async Task<ActionResult<List<TournamentViewList>>> GetLastTournament([FromQuery] TournamentFilters filters)
         {
-            List<Tournament> tournaments = await _tournamentService.GetLast();
+            List<Tournament> tournaments = await _tournamentService.GetLast(filters);
 
             if(tournaments.Count == 0)
             {
-                return NoContent();
+                throw new Exception("Aucun tournoi trouvé");
             }
 
             return Ok(tournaments.Select(t => t.ToViewList()).ToList());
@@ -51,7 +65,10 @@ namespace CheckMate.API.Controllers
 
         }
 
+        // TODO : check possible response codes 
         [HttpDelete("{id:int:min(1)}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult<bool>> Delete([FromRoute] int id)
         {
             try

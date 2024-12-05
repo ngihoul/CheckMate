@@ -17,6 +17,7 @@ namespace CheckMate.DAL.Repositories
             _connection = connection;
             _repositoryCategory = repositoryCategory;
         }
+
         public async Task<Tournament>? Create(Tournament tournament)
         {
             await _connection.OpenAsync();
@@ -47,7 +48,7 @@ namespace CheckMate.DAL.Repositories
                     command.Parameters.AddWithValue("Cancelled", tournament.Cancelled);
                     command.Parameters.AddWithValue("Cancelled_at", tournament.CancelledAt is null ? DBNull.Value : tournament.CancelledAt);
 
-                    tournament.Id = (int)await command.ExecuteScalarAsync();
+                    tournament.Id = (int) await command.ExecuteScalarAsync();
 
                     foreach (TournamentCategory category in tournament.Categories)
                     {
@@ -73,17 +74,27 @@ namespace CheckMate.DAL.Repositories
             }
         }
 
-        public async Task<List<Tournament>> GetLast()
+        public async Task<List<Tournament>> GetLast(TournamentFilters filters)
         {
             SqlCommand command = _connection.CreateCommand();
             List<Tournament> tournaments = new List<Tournament>();
 
             // TODO : Add NbPlayers, isRegistered, canRegistered
 
-            command.CommandText = "SELECT TOP(10) * FROM [Tournament] " +
-                                  "WHERE [Cancelled] = 0 AND [Status] != 3 " +
+            command.CommandText = $"SELECT TOP({ (filters.Limit is not null ? "@Limit" : "10")  }) * FROM [Tournament] " +
+                                  $"WHERE [Cancelled] = 0 AND [Status] != 3 " +
+                                  $"{ (filters.Name is not null ? "AND [Name] LIKE @Name " : "") }" +
+                                  $"{ (filters.Place is not null ? "AND [Place] LIKE @Place " : "") }" +
+                                  $"{ (filters.Status is not null ? "AND Status = @Status " : "") }" +
+                                  $"{ (filters.WomenOnly == true ? "AND WomenOnly = 1 " : "") }" +
+                                  $"{ (filters.CategoriesIds is not null ? "AND EXISTS (SELECT * FROM [MM_Tournament_Category] WHERE [MM_Tournament_Category].[TournamentId] = [Tournament].[Id] AND [MM_Tournament_Category].[CategoryId] IN (@CategoriesIds)) " : "") }" +
                                   "ORDER BY [Updated_at] DESC";
 
+            if(filters.Limit is not null) command.Parameters.AddWithValue("@Limit", filters.Limit);
+            if (filters.Name is not null) command.Parameters.AddWithValue("@Name", $"%{filters.Name}%");
+            if (filters.Place is not null) command.Parameters.AddWithValue("@Place", $"%{filters.Place}%");
+            if (filters.Status is not null) command.Parameters.AddWithValue("@Status", filters.Status);
+            if(filters.CategoriesIds is not null) command.Parameters.AddWithValue("@CategoriesIds", string.Join(",", filters.CategoriesIds));
 
             await _connection.OpenAsync();
 
@@ -102,9 +113,6 @@ namespace CheckMate.DAL.Repositories
 
             return tournaments;
         }
-
-
-
 
         public async Task<Tournament>? GetById(int id)
         {
@@ -132,7 +140,6 @@ namespace CheckMate.DAL.Repositories
                 // TODO : Utiliser IEnumerable !!!
                 if (reader.Read())
                 {
-
                     tournament = TournamentMappers.TournamentWithCategories(reader, categories);
                 }
 

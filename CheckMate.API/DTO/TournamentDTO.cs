@@ -8,19 +8,15 @@ namespace CheckMate.API.DTO
         public int Id { get; set; }
         public string Name { get; set; }
         public string? Place { get; set; }
+        public int? NbPlayers { get; set; }
         public int MinPlayers { get; set; }
         public int MaxPlayers { get; set; }
+        public List<TournamentCategory>? Categories { get; set; }
         public int? MinElo { get; set; }
         public int? MaxElo { get; set; }
-        public List<TournamentCategory>? Categories { get; set; }
         public int? Status { get; set; }
         public int? CurrentRound { get; set; }
-        public bool WomenOnly { get; set; } = false;
         public DateTime EndRegistration { get; set; }
-        public DateTime? CreatedAt { get; set; }
-        public DateTime? UpdatedAt { get; set; }
-        public bool? Cancelled { get; set; }
-        public DateTime? CancelledAt { get; set; }
     }
 
     // TODO : A mettre à jour
@@ -69,5 +65,16 @@ namespace CheckMate.API.DTO
 
         [Required]
         public DateTime EndRegistration { get; set; }
+    }
+
+    public class TournamentFiltersForm
+    {
+        public string? Name { get; set; }
+        public string? Place { get; set; }
+        public List<int>? CategoriesIds { get; set; }
+        public int? Status { get; set; }
+        public bool? WomenOnly { get; set; }
+        public int? limit { get; set; }
+        public int? page { get; set; }
     }
 }

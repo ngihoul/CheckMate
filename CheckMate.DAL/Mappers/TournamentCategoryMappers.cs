@@ -14,7 +14,7 @@ namespace CheckMate.DAL.Mappers
         {
             return new TournamentCategory()
             {
-                Id = (int)reader["Id"],
+                Id = reader["CategoryId"] is null ? (int)reader["Id"] : (int)reader["CategoryId"],
                 Name = (string)reader["Name"],
                 Rules = (string)reader["Rules"]
             };

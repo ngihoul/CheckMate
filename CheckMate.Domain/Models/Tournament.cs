@@ -21,4 +21,15 @@
         public List<User>? Players { get; set; }
         // public List<Games>? Games { get; set; }
     }
+
+    public class TournamentFilters
+    {
+        public string? Name { get; set; }
+        public string? Place { get; set; }
+        public List<int>? CategoriesIds { get; set; }
+        public int? Status { get; set; }
+        public bool? WomenOnly { get; set; }
+        public int? Limit { get; set; }
+        public int? Page { get; set; }
+    }
 }

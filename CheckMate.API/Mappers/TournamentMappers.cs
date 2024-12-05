@@ -36,12 +36,7 @@ namespace CheckMate.API.Mappers
                 Categories = tournament.Categories,
                 Status = tournament.Status,
                 CurrentRound = tournament.CurrentRound,
-                WomenOnly = tournament.WomenOnly,
                 EndRegistration = tournament.EndRegistration,
-                CreatedAt = tournament.CreatedAt,
-                UpdatedAt = tournament.UpdatedAt,
-                Cancelled = tournament.Cancelled,
-                CancelledAt = tournament.CancelledAt
             };
         }
 
