@@ -30,9 +30,11 @@ namespace CheckMate.BLL.Services
                     throw new ArgumentException("Le max d'ELO doit etre superieur ou égal au min ELO");
                 }
 
-                if (tournament.EndRegistration < DateTime.Now.AddDays(tournament.MinPlayers))
+                DateTime minimumEndRegistrationDate = GetMinimumEndRegistrationDate(tournament);
+
+                if (tournament.EndRegistration < minimumEndRegistrationDate)
                 {
-                    throw new Exception($"La date de fin d'inscription doit etre superieur ou egal au {DateTime.Now.AddDays(tournament.MinPlayers).ToString("dd/MM/yyyy")} ");
+                    throw new Exception($"La date de fin d'inscription doit etre superieur ou egal au {minimumEndRegistrationDate.ToString("dd/MM/yyyy")} ");
                 }
 
                 List<TournamentCategory> categories = await _categoryRepository.GetAll();
@@ -45,6 +47,11 @@ namespace CheckMate.BLL.Services
             {
                 throw new Exception(ex.Message);
             }
+        }
+
+        private DateTime GetMinimumEndRegistrationDate(Tournament tournament)
+        {
+            return DateTime.Now.AddDays(tournament.MinPlayers);
         }
     }
 }
