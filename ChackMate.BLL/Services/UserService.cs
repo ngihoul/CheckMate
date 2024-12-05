@@ -10,12 +10,14 @@ namespace ChackMate.BLL.Services
         private readonly IUserRepository _userRepository;
         private readonly IRoleRepository _roleRepository;
         private readonly AuthService _authService;
+        private readonly MailService _mailService;
 
-        public UserService(IUserRepository userRepository, IRoleRepository roleRepository, AuthService authService)
+        public UserService(IUserRepository userRepository, IRoleRepository roleRepository, AuthService authService, MailService mailService)
         {
             _userRepository = userRepository;
             _roleRepository = roleRepository;
             _authService = authService;
+            _mailService = mailService;
         }
 
         public async Task<User?> Create(User user)
@@ -49,7 +51,7 @@ namespace ChackMate.BLL.Services
 
                 if (await _userRepository.GetByEmail(user.Email) != null)
                 {
-                    throw new ArgumentException("Cette adresse email existe déjà");
+                    throw new ArgumentException("Cette adresse email est déjà utilisée");
                 }
 
                 user.Salt = _authService.GenerateSalt();
@@ -59,7 +61,12 @@ namespace ChackMate.BLL.Services
                 // QUESTION : Est-ce une bonne idée d'ajouter le rôle à ce niveau ?
                 user.Role = await _roleRepository.GetByName("User")!;
 
-                return await _userRepository.Create(user);
+                User userToAdd = await _userRepository.Create(user);
+
+                // Send mail to user with password
+                _mailService.SendMail(userToAdd, "Bienvenue sur CheckMate", $"Vous allez pouvoir vous inscrire à tous nos incroyables tournois d'échecs !");
+
+                return userToAdd;
             }
             catch (Exception ex)
             {
@@ -99,7 +106,8 @@ namespace ChackMate.BLL.Services
                 // Save user
                 User? userToAdd = await _userRepository.Create(user);
 
-                // TODO : Send mail to user with password
+                // Send mail to user with password
+                _mailService.SendMail(userToAdd, "Bienvenue sur CheckMate", $"Connectez-vous avec votre mot de passe : {plainPassword} et choisissez un nom d'utilisateur.");
 
                 return userToAdd;
             }
