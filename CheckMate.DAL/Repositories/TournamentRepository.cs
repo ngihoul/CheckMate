@@ -18,6 +18,8 @@ namespace CheckMate.DAL.Repositories
             {
                 await _connection.OpenAsync();
 
+                // QUESTION : Est-ce que le rollback est automatique ou doit-il être fait dans le catch ?
+                // QUESTION 2 : Ou mettre le rollback si nécessaire ?
                 using (var transaction = _connection.BeginTransaction())
                 {
                     SqlCommand command = _connection.CreateCommand();
