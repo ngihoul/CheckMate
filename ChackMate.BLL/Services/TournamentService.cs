@@ -41,6 +41,8 @@ namespace CheckMate.BLL.Services
                 
                 tournament.Categories = categories.Where(c => categoriesIds.Contains(c.Id)).ToList();
 
+                // TODO : A la création d’un tournoi un email est envoyé à tous les joueurs qui respectent les contraintes du tournoi(v.inscriptions) pour les prévenir
+
                 return await _tournamentRepository.Create(tournament);
             }
             catch (Exception ex)
