@@ -2,6 +2,7 @@
 using CheckMate.BLL.Services;
 using CheckMate.DAL.Interfaces;
 using CheckMate.Domain.Models;
+using System.Text.RegularExpressions;
 
 namespace ChackMate.BLL.Services
 {
@@ -128,6 +129,33 @@ namespace ChackMate.BLL.Services
             userToPatch.Username = user.Username;
 
             return await _userRepository.Patch(userToPatch);
+        }
+
+        public async Task<User?> Login(string usernameOrEmail, string password)
+        {
+            User? user = null;
+
+            if (isEmail(usernameOrEmail))
+            {
+                user = await _userRepository.GetByEmailForLogin(usernameOrEmail);
+            } else
+            {
+                user = await _userRepository.GetByUsernameForLogin(usernameOrEmail);
+            }
+
+            if(user is null || !_authService.Verify(user, password))
+            {
+                throw new Exception("Données invalides");
+            }
+
+            return user;
+        }
+
+        private bool isEmail(string email)
+        {
+            Regex emailRegex = new Regex("^\\S+@\\S+\\.\\S+$");
+
+            return emailRegex.IsMatch(email);
         }
     }
 }

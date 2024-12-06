@@ -69,12 +69,16 @@ namespace CheckMate.API.DTO
 
     public class TournamentFiltersForm
     {
+        [DataType(DataType.Text)]
         public string? Name { get; set; }
+        [DataType(DataType.Text)]
         public string? Place { get; set; }
         public List<int>? CategoriesIds { get; set; }
+        [Range(1,3)]
         public int? Status { get; set; }
         public bool? WomenOnly { get; set; }
-        public int? limit { get; set; }
-        public int? page { get; set; }
+        [MaxLength(25)]
+        public int? Limit { get; set; }
+        public int? Page { get; set; }
     }
 }

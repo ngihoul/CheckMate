@@ -82,6 +82,40 @@ namespace CheckMate.DAL.Repositories
             }
         }
 
+        public async Task<User?> GetByEmailForLogin(string email)
+        {
+            try
+            {
+                SqlCommand command = _connection.CreateCommand();
+
+                command.CommandText = "SELECT [U].[Id], [U].[Username], [U].[Email], [U].[Password], [U].[Salt], [U].[RoleId], [R].[Id] AS [RoleId], [R].[Name] AS [RoleName] FROM [User] AS U " +
+                                      "JOIN [Role] AS R ON [U].[RoleId] = [R].[Id] " +
+                                      "WHERE Email = @Email";
+
+                command.Parameters.AddWithValue("Email", email);
+
+                await _connection.OpenAsync();
+
+                using SqlDataReader reader = await command.ExecuteReaderAsync();
+
+                User? user = null;
+
+                if (await reader.ReadAsync())
+                {
+                    user = UserMappers.UserForLogin(reader);
+                }
+
+                await _connection.CloseAsync();
+
+                return user;
+            }
+            catch (Exception ex)
+            {
+
+                throw new Exception(ex.Message, ex);
+            }
+        }
+
         public async Task<User?> GetByUsername(string username)
         {
             try
@@ -121,6 +155,45 @@ namespace CheckMate.DAL.Repositories
 
         }
 
+        public async Task<User?> GetByUsernameForLogin(string username)
+        {
+            try
+            {
+                if (username is null)
+                {
+                    return null;
+                }
+
+                SqlCommand command = _connection.CreateCommand();
+
+                command.CommandText = "SELECT [U].[Id], [U].[Username], [U].[Email], [U].[Password], [U].[Salt], [U].[RoleId], [R].[Id] AS [RoleId], [R].[Name] AS [RoleName] FROM [User] AS U " +
+                                      "JOIN [Role] AS R ON [U].[RoleId] = [R].[Id] " +
+                                      "WHERE Username = @Username";
+
+                command.Parameters.AddWithValue("Username", username);
+
+                await _connection.OpenAsync();
+
+                using SqlDataReader reader = command.ExecuteReader();
+
+                User? user = null;
+
+                if (reader.Read())
+                {
+                    user = UserMappers.UserForLogin(reader);
+                }
+
+                await _connection.CloseAsync();
+
+                return user;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message, ex);
+            }
+
+        }
+
         public async Task<User?> GetById(int id)
         {
             try
@@ -134,7 +207,7 @@ namespace CheckMate.DAL.Repositories
 
                 command.CommandText = "SELECT [U].[Id], [U].[Username], [U].[Email], [U].[Date_of_birth], [U].[Gender], [U].[Elo], [R].[Id] AS [RoleId], [R].[Name] AS [RoleName] FROM [User] AS U " +
                                       "JOIN [Role] AS R ON [U].[RoleId] = [R].[Id] " +
-                                      "WHERE [U].[Id] = @id";
+                                      "WHERE Id = @Id";
 
                 command.Parameters.AddWithValue("id", id);
 

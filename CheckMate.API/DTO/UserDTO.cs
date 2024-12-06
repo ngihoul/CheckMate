@@ -79,4 +79,13 @@ namespace CheckMate.API.DTO
         [MaxLength(100)]
         public string Username { get; set; }
     }
+
+    public class UserLoginForm
+    {
+        [Required]
+        public string UsernameOrEmail { get; set; }
+
+        [Required]
+        public string Password { get; set; }
+    }
 }

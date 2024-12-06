@@ -1,6 +1,7 @@
 ﻿using ChackMate.BLL.Interfaces;
 using CheckMate.API.DTO;
 using CheckMate.API.Mappers;
+using CheckMate.BLL.Services;
 using CheckMate.Domain.Models;
 using Microsoft.AspNetCore.Mvc;
 
@@ -10,10 +11,12 @@ namespace CheckMate.API.Controllers
     public class UsersController : ControllerBase
     {
         private readonly IUserService _userService;
+        private readonly AuthService _authService;
 
-        public UsersController(IUserService userService)
+        public UsersController(IUserService userService, AuthService authService)
         {
             _userService = userService;
+            _authService = authService;
         }
 
         [HttpPost("api/register")]
@@ -37,6 +40,26 @@ namespace CheckMate.API.Controllers
             {
                 return StatusCode(500, new { message = ex.Message });
             }
+        }
+
+        [HttpPost("api/login")]
+        public async Task<ActionResult<string>> Login([FromBody] UserLoginForm userForm)
+        {
+            if(userForm is null || !ModelState.IsValid)
+            {
+                throw new ArgumentException("Données invalides");
+            }
+
+            User? user = await _userService.Login(userForm.UsernameOrEmail, userForm.Password);
+
+            if(user is null)
+            {
+                throw new ArgumentException("Utilisateur non trouvé");
+            }
+
+            string token = _authService.GenerateToken(user);
+
+            return Ok(token);
         }
 
         [HttpPatch("api/username/{id}")]
