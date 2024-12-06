@@ -1,4 +1,4 @@
-﻿using ChackMate.BLL.Interfaces;
+﻿using CheckMate.BLL.Interfaces;
 using CheckMate.API.DTO;
 using CheckMate.API.Mappers;
 using CheckMate.BLL.Services;

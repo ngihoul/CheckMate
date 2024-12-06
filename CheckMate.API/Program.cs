@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using ChackMate.BLL.Interfaces;
-using ChackMate.BLL.Services;
+using CheckMate.BLL.Interfaces;
+using CheckMate.BLL.Services;
 using CheckMate.BLL.Interfaces;
 using CheckMate.BLL.Services;
 using CheckMate.DAL.Interfaces;

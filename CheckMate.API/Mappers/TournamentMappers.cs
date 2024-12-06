@@ -22,13 +22,14 @@ namespace CheckMate.API.Mappers
             };
         }
 
-        public static TournamentView ToView(this Tournament tournament)
+        public static TournamentView ToView(this Tournament tournament, TournamentPlayerStatus? playerStatus = null)
         {
             return new TournamentView
             {
                 Id = tournament.Id,
                 Name = tournament.Name,
                 Place = tournament.Place,
+                NbPlayers = playerStatus?.NbPlayers ?? 0,
                 MinPlayers = tournament.MinPlayers,
                 MaxPlayers = tournament.MaxPlayers,
                 MinElo = tournament.MinElo,
@@ -37,16 +38,19 @@ namespace CheckMate.API.Mappers
                 Status = tournament.Status,
                 CurrentRound = tournament.CurrentRound,
                 EndRegistration = tournament.EndRegistration,
+                CanRegister = playerStatus?.CanRegister ?? false,
+                IsRegistered = playerStatus?.IsRegistered ?? false
             };
         }
 
-        public static TournamentView ToViewList(this Tournament tournament)
+        public static TournamentViewList ToViewList(this Tournament tournament, TournamentPlayerStatus? playerStatus = null)
         {
-            return new TournamentView
+            return new TournamentViewList
             {
                 Id = tournament.Id,
                 Name = tournament.Name,
                 Place = tournament.Place,
+                NbPlayers = playerStatus?.NbPlayers ?? 0,
                 MinPlayers = tournament.MinPlayers,
                 MaxPlayers = tournament.MaxPlayers,
                 Categories = tournament.Categories,
@@ -55,6 +59,8 @@ namespace CheckMate.API.Mappers
                 Status = tournament.Status,
                 CurrentRound = tournament.CurrentRound,
                 EndRegistration = tournament.EndRegistration,
+                CanRegister = playerStatus?.CanRegister ?? false,
+                IsRegistered = playerStatus?.IsRegistered ?? false
             };
         }
     }

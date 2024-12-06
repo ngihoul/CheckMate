@@ -5,6 +5,7 @@
         public int Id { get; set; }
         public string Name { get; set; }
         public string? Place { get; set; }
+        public int? NbPlayers { get; set; } = 0;
         public int MinPlayers { get; set; }
         public int MaxPlayers { get; set; }
         public int? MinElo { get; set; }
@@ -20,6 +21,16 @@
         public DateTime? CancelledAt { get; set; }
         public List<User>? Players { get; set; }
         // public List<Games>? Games { get; set; }
+    }
+
+    public class TournamentPlayerStatus
+    {
+        public int TounamentId { get; set; }
+        public int PlayerId { get; set; }
+
+        public int NbPlayers { get; set; } = 0;
+        public bool CanRegister { get; set; } = false;
+        public bool IsRegistered { get; set; } = false;
     }
 
     public class TournamentFilters

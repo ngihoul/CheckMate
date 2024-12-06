@@ -1,23 +1,25 @@
-﻿using ChackMate.BLL.Interfaces;
+﻿using CheckMate.BLL.Interfaces;
 using CheckMate.BLL.Services;
 using CheckMate.DAL.Interfaces;
 using CheckMate.Domain.Models;
 using System.Text.RegularExpressions;
 
-namespace ChackMate.BLL.Services
+namespace CheckMate.BLL.Services
 {
     // TODO : try .. catch ... pas utile.
     public class UserService : IUserService
     {
         private readonly IUserRepository _userRepository;
         private readonly IRoleRepository _roleRepository;
+        private readonly ITournamentCategoryRepository _categoryRepository;
         private readonly AuthService _authService;
         private readonly MailService _mailService;
 
-        public UserService(IUserRepository userRepository, IRoleRepository roleRepository, AuthService authService, MailService mailService)
+        public UserService(IUserRepository userRepository, IRoleRepository roleRepository, ITournamentCategoryRepository categoryRepository, AuthService authService, MailService mailService)
         {
             _userRepository = userRepository;
             _roleRepository = roleRepository;
+            _categoryRepository = categoryRepository;
             _authService = authService;
             _mailService = mailService;
         }
@@ -138,12 +140,13 @@ namespace ChackMate.BLL.Services
             if (isEmail(usernameOrEmail))
             {
                 user = await _userRepository.GetByEmailForLogin(usernameOrEmail);
-            } else
+            }
+            else
             {
                 user = await _userRepository.GetByUsernameForLogin(usernameOrEmail);
             }
 
-            if(user is null || !_authService.Verify(user, password))
+            if (user is null || !_authService.Verify(user, password))
             {
                 throw new Exception("Données invalides");
             }
@@ -156,6 +159,42 @@ namespace ChackMate.BLL.Services
             Regex emailRegex = new Regex("^\\S+@\\S+\\.\\S+$");
 
             return emailRegex.IsMatch(email);
+        }
+
+        public int GetAge(User user)
+        {
+            int age = 0;
+
+            age = DateTime.Now.Year - user.DateOfBirth.Year;
+
+            if (DateTime.Now.Month < user.DateOfBirth.Month || (DateTime.Now.Month == user.DateOfBirth.Month && DateTime.Now.Day < user.DateOfBirth.Day))
+            {
+                age--;
+            }
+
+            return age;
+        }
+
+        public async Task<TournamentCategory>GetUserCategory(User user)
+        {
+            TournamentCategory userCategory = null;
+            List<TournamentCategory> categories = await _categoryRepository.GetAll();
+            int userAge = GetAge(user);
+
+            if (userAge < 18)
+            {
+                userCategory = categories.Where(c => c.Name == "Junior").FirstOrDefault();
+            }
+            else if (userAge >= 18 && userAge < 60)
+            {
+                userCategory = categories.Where(c => c.Name == "Senior").FirstOrDefault();
+            }
+            else
+            {
+                userCategory = categories.Where(c => c.Name == "Veteran").FirstOrDefault();
+            }
+
+            return userCategory;
         }
     }
 }

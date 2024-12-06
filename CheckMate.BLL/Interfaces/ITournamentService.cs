@@ -1,9 +1,4 @@
 ﻿using CheckMate.Domain.Models;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace CheckMate.BLL.Interfaces
 {
@@ -13,5 +8,7 @@ namespace CheckMate.BLL.Interfaces
         public Task<List<Tournament>> GetLast(TournamentFilters? filters);
         public Task<Tournament>? Create(Tournament tournament, List<int> categoriesIds);
         public Task<bool> Delete(int id);
+        public Task<bool> Register(int tournamentId, int userId);
+        public Task<TournamentPlayerStatus> GetRegisterInfo(Tournament tournament, int userId);
     }
 }

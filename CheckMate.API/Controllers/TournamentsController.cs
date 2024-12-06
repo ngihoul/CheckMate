@@ -1,8 +1,10 @@
 ﻿using CheckMate.API.DTO;
-using CheckMate.API.Mappers;
 using CheckMate.BLL.Interfaces;
+using CheckMate.API.Mappers;
 using CheckMate.Domain.Models;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
+using Azure.Identity;
 
 namespace CheckMate.API.Controllers
 {
@@ -29,13 +31,16 @@ namespace CheckMate.API.Controllers
                 throw new ArgumentException("Tournoi non trouvé");
             }
 
-            return Ok(tournament.ToView());
+            TournamentPlayerStatus? playerStatus = await GetPlayerStatus(tournament);
+
+            return Ok(tournament.ToView(playerStatus));
         }
 
         [HttpGet]
         [Route("/api/tournaments/last")]
         // TODO : check possible response codes
-        public async Task<ActionResult<List<TournamentViewList>>> GetLastTournament([FromQuery] TournamentFilters filters)
+        // TODO : tout passer en IEnumerable
+        public async Task<ActionResult<IEnumerable<TournamentViewList>>> GetLastTournament([FromQuery] TournamentFilters filters)
         {
             List<Tournament> tournaments = await _tournamentService.GetLast(filters);
 
@@ -44,7 +49,13 @@ namespace CheckMate.API.Controllers
                 throw new Exception("Aucun tournoi trouvé");
             }
 
-            return Ok(tournaments.Select(t => t.ToViewList()).ToList());
+            IEnumerable<TournamentViewList> tournamentsView = tournaments.Select( t =>
+            {
+                TournamentPlayerStatus playerStatus = GetPlayerStatus(t).Result;
+                return t.ToViewList(playerStatus);
+            });
+
+            return Ok(tournamentsView);
         }
 
         [HttpPost]
@@ -81,6 +92,28 @@ namespace CheckMate.API.Controllers
             {
                 return StatusCode(500, new { message = ex.Message });
             }
+        }
+
+        [HttpPost("{tournamentId:int:min(1)}/register/{userId:int:min(1)}")]
+        public async Task<bool> Register([FromRoute] int tournamentId, [FromRoute] int userId)
+        {
+            if(tournamentId <= 0 || userId <= 0)
+            {
+                throw new ArgumentException("Données invalides");
+            }
+
+            return await _tournamentService.Register(tournamentId, userId);
+        }
+
+        private async Task<TournamentPlayerStatus> GetPlayerStatus(Tournament tournament)
+        {
+            if (HttpContext.User.Identity.IsAuthenticated is true)
+            {
+                int userId = Convert.ToInt32(HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier));
+                return await _tournamentService.GetRegisterInfo(tournament, userId);
+            }
+
+            return null;
         }
     }
 }

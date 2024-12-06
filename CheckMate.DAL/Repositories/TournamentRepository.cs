@@ -2,6 +2,7 @@
 using CheckMate.DAL.Mappers;
 using CheckMate.Domain.Models;
 using Microsoft.Data.SqlClient;
+using System.Transactions;
 
 // TODO : Try .. catch pas utile dans le repo si pas d'autre opération à part throw
 
@@ -159,7 +160,7 @@ namespace CheckMate.DAL.Repositories
             {
                 using SqlCommand command = _connection.CreateCommand();
                 // QUESTION : est-ce utile de transmettre tout l'objet Tournament ?
-                // Possibilité d utiliser delete(id) avec delete(tournament) Soit uniquement id par facilite (pas de select)
+                // TODO : Possibilité d utiliser delete(id) avec delete(tournament) Soit uniquement id par facilite (pas de select)
                 command.CommandText = "UPDATE [Tournament] SET [Cancelled] = 1, [Cancelled_at] = GETDATE() WHERE [Id] = @Id";
                 command.Parameters.AddWithValue("@Id", tournament.Id);
 
@@ -175,6 +176,76 @@ namespace CheckMate.DAL.Repositories
             {
                 throw new Exception(ex.Message, ex);
             }
+        }
+
+        public async Task<bool> Register(Tournament tournament, User user)
+        {
+            SqlCommand command = _connection.CreateCommand();
+
+            command.CommandText = "INSERT INTO [MM_Tournament_Registration] ([TournamentId], [UserId]) " +
+                                  "OUTPUT Inserted.Id " +
+                                  "VALUES (@tournamentId, @userId);";
+
+            command.Parameters.AddWithValue("tournamentId", tournament.Id);
+            command.Parameters.AddWithValue("UserId", user.Id);
+
+            await _connection.OpenAsync();
+
+            int registrationId = (int)await command.ExecuteScalarAsync();
+
+            await _connection.CloseAsync();
+
+            // QUESTION : que renvoie-t-il si erreur ?
+            return registrationId > 0;
+        }
+
+        public async Task<bool> IsRegistered(Tournament tournament, User user)
+        {
+            SqlCommand command = _connection.CreateCommand();
+
+            command.CommandText = "SELECT * FROM [MM_Tournament_Registration] WHERE [TournamentId] = @tournamentId AND [UserId] = @userId;";
+
+            command.Parameters.AddWithValue("tournamentId", tournament.Id);
+            command.Parameters.AddWithValue("userId", user.Id);
+
+            bool result = false;
+
+            await _connection.OpenAsync();
+
+            using SqlDataReader reader = command.ExecuteReader();
+
+            // TODO : Utiliser IEnumerable !!!
+            if (reader.Read())
+            {
+                result = true;
+            }
+
+            await _connection.CloseAsync();
+
+            return result;
+        }
+
+        public async Task<int> GetAttendees(Tournament tournament)
+        {
+            SqlCommand command = _connection.CreateCommand();
+
+            command.CommandText = "SELECT COUNT(*) AS [Attendees] FROM [MM_Tournament_Registration] WHERE [TournamentId] = @tournamentId;";
+
+            command.Parameters.AddWithValue("tournamentId", tournament.Id);
+
+            await _connection.OpenAsync();
+            int result = 0;
+
+            using SqlDataReader reader = command.ExecuteReader();
+
+            if (reader.Read())
+            {
+                result = (int)reader["Attendees"];
+            }
+
+            await _connection.CloseAsync();
+
+            return result;
         }
     }
 }

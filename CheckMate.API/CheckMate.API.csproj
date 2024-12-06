@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
@@ -13,7 +13,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\ChackMate.BLL\CheckMate.BLL.csproj" />
+    <ProjectReference Include="..\CheckMate.BLL\CheckMate.BLL.csproj" />
     <ProjectReference Include="..\CheckMate.DAL\CheckMate.DAL.csproj" />
   </ItemGroup>
 

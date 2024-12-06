@@ -1,5 +1,7 @@
 ﻿using CheckMate.BLL.Interfaces;
+using CheckMate.BLL.Interfaces;
 using CheckMate.DAL.Interfaces;
+using CheckMate.DAL.Repositories;
 using CheckMate.Domain.Models;
 
 namespace CheckMate.BLL.Services
@@ -9,11 +11,15 @@ namespace CheckMate.BLL.Services
 
         private readonly ITournamentCategoryRepository _categoryRepository;
         private readonly ITournamentRepository _tournamentRepository;
+        private readonly IUserRepository _userRepository;
+        private readonly IUserService _userService;
 
-        public TournamentService(ITournamentCategoryRepository categoryRepository, ITournamentRepository tournamentRepository)
+        public TournamentService(ITournamentCategoryRepository categoryRepository, ITournamentRepository tournamentRepository, IUserRepository userRepository, IUserService userService)
         {
             _categoryRepository = categoryRepository;
             _tournamentRepository = tournamentRepository;
+            _userRepository = userRepository;
+            _userService = userService;
         }
 
         public async Task<Tournament>? GetById(int id)
@@ -102,9 +108,90 @@ namespace CheckMate.BLL.Services
             }
         }
 
+        public async Task<TournamentPlayerStatus> GetRegisterInfo(Tournament tournament, int userId)
+        {
+            User? user = await _userRepository.GetById(userId);
+
+            if (user is null || tournament is null)
+            {
+                return new TournamentPlayerStatus
+                {
+                    NbPlayers = 0,
+                    TounamentId = tournament.Id,
+                    PlayerId = userId,
+                    IsRegistered = false,
+                    CanRegister = false
+                };
+            }
+
+            bool isRegistered = await _tournamentRepository.IsRegistered(tournament, user);
+
+            TournamentCategory? userCategory = await _userService.GetUserCategory(user);
+
+            return new TournamentPlayerStatus
+            {
+                NbPlayers = await _tournamentRepository.GetAttendees(tournament),
+                TounamentId = tournament.Id,
+                PlayerId = userId,
+                IsRegistered = isRegistered,
+                CanRegister = tournament.Categories.Any(c => c.Id == userCategory!.Id) && !isRegistered
+            };
+
+            // return tournament.Categories.Contains(userCategory);
+            //return tournament.Categories.Any(c => c.Id == userCategory.Id);
+        }
+
+        public async Task<bool> Register(int tournamentId, int userId)
+        {
+            Tournament? tournament = await _tournamentRepository.GetById(tournamentId);
+
+            if (tournament == null)
+            {
+                throw new Exception("Le tournoi n'existe pas");
+            }
+
+            User? user = await _userRepository.GetById(userId);
+
+            if (user == null)
+            {
+                throw new Exception("L'utilisateur n'existe pas");
+            }
+
+            if(tournament.EndRegistration < DateTime.Now)
+            {
+                throw new Exception("Les inscriptions sont terminées");
+            }
+
+            int attendees = await _tournamentRepository.GetAttendees(tournament);
+
+            if (attendees >= tournament.MaxPlayers)
+            {
+                throw new Exception("Le tournoi est complet");
+            }
+
+            TournamentCategory userCategory = await _userService.GetUserCategory(user);
+            List<TournamentCategory> categories = await _categoryRepository.GetAll();
+
+            if (!categories.Any(c => c.Id == userCategory!.Id))
+            {
+                throw new Exception("Le tournoi ne correspond pas à votre categorie");
+            }
+
+            if (await _tournamentRepository.IsRegistered(tournament, user))
+            {
+                throw new Exception("L'utilisateur est deja inscrit");
+            }
+
+            return await _tournamentRepository.Register(tournament, user);
+        }
+
         private DateTime GetMinimumEndRegistrationDate(Tournament tournament)
         {
             return DateTime.Now.AddDays(tournament.MinPlayers);
+        }
+
+        private Task<int> GetAttendees(Tournament tournament) {
+            return _tournamentRepository.GetAttendees(tournament);
         }
     }
 }

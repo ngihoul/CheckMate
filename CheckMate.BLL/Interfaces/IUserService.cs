@@ -1,6 +1,6 @@
 ﻿using CheckMate.Domain.Models;
 
-namespace ChackMate.BLL.Interfaces
+namespace CheckMate.BLL.Interfaces
 {
     public interface IUserService
     {
@@ -8,5 +8,7 @@ namespace ChackMate.BLL.Interfaces
         public Task<User?> CreateByAdmin(User user);
         public Task<User?> ChooseUsername(int id, User user);
         public Task<User?> Login(string usernameOrEmail, string password);
+        public int GetAge(User user);
+        public Task<TournamentCategory> GetUserCategory(User user);
     }
 }

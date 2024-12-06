@@ -17,6 +17,8 @@ namespace CheckMate.API.DTO
         public int? Status { get; set; }
         public int? CurrentRound { get; set; }
         public DateTime EndRegistration { get; set; }
+        public bool CanRegister { get; set; }
+        public bool IsRegistered { get; set; }
     }
 
     // TODO : A mettre à jour
@@ -34,6 +36,8 @@ namespace CheckMate.API.DTO
         public int? Status { get; set; }
         public int? CurrentRound { get; set; }
         public DateTime EndRegistration { get; set; }
+        public bool CanRegister { get; set; }
+        public bool IsRegistered { get; set; }
     }
 
     public class TournamentCreateForm

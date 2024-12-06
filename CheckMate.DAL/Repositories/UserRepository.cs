@@ -207,7 +207,7 @@ namespace CheckMate.DAL.Repositories
 
                 command.CommandText = "SELECT [U].[Id], [U].[Username], [U].[Email], [U].[Date_of_birth], [U].[Gender], [U].[Elo], [R].[Id] AS [RoleId], [R].[Name] AS [RoleName] FROM [User] AS U " +
                                       "JOIN [Role] AS R ON [U].[RoleId] = [R].[Id] " +
-                                      "WHERE Id = @Id";
+                                      "WHERE [U].[Id] = @Id";
 
                 command.Parameters.AddWithValue("id", id);
 
@@ -230,7 +230,6 @@ namespace CheckMate.DAL.Repositories
             {
                 throw new Exception(ex.Message, ex);
             }
-
         }
 
         public async Task<User?> Patch(User user)

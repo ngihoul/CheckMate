@@ -11,7 +11,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CheckMate.Domain", "CheckMa
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CheckMate.DAL", "CheckMate.DAL\CheckMate.DAL.csproj", "{07397EEF-DEF9-47AA-B847-25652ACEC29C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CheckMate.BLL", "ChackMate.BLL\CheckMate.BLL.csproj", "{713E785F-41C0-468B-A674-9B810F009414}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CheckMate.BLL", "CheckMate.BLL\CheckMate.BLL.csproj", "{FD8027C6-21FF-4EF4-9E95-AD4AAC877230}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -37,10 +37,10 @@ Global
 		{07397EEF-DEF9-47AA-B847-25652ACEC29C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{07397EEF-DEF9-47AA-B847-25652ACEC29C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{07397EEF-DEF9-47AA-B847-25652ACEC29C}.Release|Any CPU.Build.0 = Release|Any CPU
-		{713E785F-41C0-468B-A674-9B810F009414}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{713E785F-41C0-468B-A674-9B810F009414}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{713E785F-41C0-468B-A674-9B810F009414}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{713E785F-41C0-468B-A674-9B810F009414}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FD8027C6-21FF-4EF4-9E95-AD4AAC877230}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FD8027C6-21FF-4EF4-9E95-AD4AAC877230}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FD8027C6-21FF-4EF4-9E95-AD4AAC877230}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FD8027C6-21FF-4EF4-9E95-AD4AAC877230}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
