@@ -67,9 +67,7 @@ namespace CheckMate.DAL.Repositories
                 );
             }
 
-
             await _connection.CloseAsync();
-
 
             return categories;
         }

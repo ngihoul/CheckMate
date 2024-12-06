@@ -198,6 +198,23 @@ namespace CheckMate.DAL.Repositories
             // QUESTION : que renvoie-t-il si erreur ?
             return registrationId > 0;
         }
+        public async Task<bool> Unregister(Tournament tournament, User user)
+        {
+            SqlCommand command = _connection.CreateCommand();
+
+            command.CommandText = "DELETE FROM [MM_Tournament_Registration] WHERE [TournamentId] = @tournamentId AND [UserId] = @userId;";
+
+            command.Parameters.AddWithValue("tournamentId", tournament.Id);
+            command.Parameters.AddWithValue("userId", user.Id);
+
+            await _connection.OpenAsync();
+
+            int rowsAffected = command.ExecuteNonQuery();
+
+            await _connection.CloseAsync();
+
+            return rowsAffected == 1;
+        }
 
         public async Task<bool> IsRegistered(Tournament tournament, User user)
         {

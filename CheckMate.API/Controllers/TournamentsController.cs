@@ -94,7 +94,7 @@ namespace CheckMate.API.Controllers
             }
         }
 
-        [HttpPost("{tournamentId:int:min(1)}/register/{userId:int:min(1)}")]
+        [HttpGet("{tournamentId:int:min(1)}/register/{userId:int:min(1)}")]
         public async Task<bool> Register([FromRoute] int tournamentId, [FromRoute] int userId)
         {
             if(tournamentId <= 0 || userId <= 0)
@@ -105,15 +105,38 @@ namespace CheckMate.API.Controllers
             return await _tournamentService.Register(tournamentId, userId);
         }
 
-        private async Task<TournamentPlayerStatus> GetPlayerStatus(Tournament tournament)
+        [HttpGet("{tournamentId:int:min(1)}/unregister/{userId:int:min(1)}")]
+        public async Task<bool> Unregister([FromRoute] int tournamentId, [FromRoute] int userId)
         {
-            if (HttpContext.User.Identity.IsAuthenticated is true)
+            if (tournamentId <= 0 || userId <= 0)
             {
-                int userId = Convert.ToInt32(HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier));
-                return await _tournamentService.GetRegisterInfo(tournament, userId);
+                throw new ArgumentException("Données invalides");
             }
 
-            return null;
+            return await _tournamentService.Unregister(tournamentId, userId);
+        }
+
+        [HttpGet("{tournamentId:int:min(1)}/start")]
+        public async Task<bool> Start([FromRoute] int tournamentId)
+        {
+            if(tournamentId <= 0)
+            {
+                throw new ArgumentException("Données invalides");
+            }
+
+            return await _tournamentService.Start(tournamentId);
+        }
+
+        private async Task<TournamentPlayerStatus> GetPlayerStatus(Tournament tournament)
+        {
+            int userId = 0;
+
+            if (HttpContext.User.Identity.IsAuthenticated is true)
+            {
+                userId = Convert.ToInt32(HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier));
+            }
+
+            return await _tournamentService.GetRegisterInfo(tournament, userId);
         }
     }
 }

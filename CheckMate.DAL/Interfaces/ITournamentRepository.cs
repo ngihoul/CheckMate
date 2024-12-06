@@ -15,6 +15,7 @@ namespace CheckMate.DAL.Interfaces
         
         public Task<bool> Delete(Tournament tournament); 
         public Task<bool> Register(Tournament tournament, User user);
+        public Task<bool> Unregister(Tournament tournament, User user);
         public Task<bool> IsRegistered(Tournament tournament, User user);
         public Task<int> GetAttendees(Tournament tournament);
     }

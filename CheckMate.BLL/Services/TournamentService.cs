@@ -3,6 +3,10 @@ using CheckMate.BLL.Interfaces;
 using CheckMate.DAL.Interfaces;
 using CheckMate.DAL.Repositories;
 using CheckMate.Domain.Models;
+using System.Reflection;
+using static Org.BouncyCastle.Crypto.Engines.SM2Engine;
+using static System.Reflection.Metadata.BlobBuilder;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace CheckMate.BLL.Services
 {
@@ -24,14 +28,14 @@ namespace CheckMate.BLL.Services
 
         public async Task<Tournament>? GetById(int id)
         {
-            if(id <= 0)
+            if (id <= 0)
             {
                 throw new ArgumentException("L'id du tournoi doit etre superieur a zéro");
             }
 
             Tournament? tournament = await _tournamentRepository.GetById(id);
 
-            if(tournament is null || tournament.Cancelled == true)
+            if (tournament is null || tournament.Cancelled == true)
             {
                 throw new ArgumentException("Le tournoi n'existe pas");
             }
@@ -83,19 +87,14 @@ namespace CheckMate.BLL.Services
         {
             try
             {
-                Tournament? tournamentToDelete = await _tournamentRepository.GetById(id);
+                Tournament? tournamentToDelete = GetTournament(id).Result;
 
-                if (tournamentToDelete is null)
-                {
-                    throw new Exception("Le tournoi n'existe pas");
-                }
-
-                if(tournamentToDelete.EndRegistration < DateTime.Now)
+                if (tournamentToDelete.EndRegistration < DateTime.Now)
                 {
                     throw new Exception("Les inscriptions étant terminées, il n'est pas possible d'annuler le tournoi");
                 }
-                
-                if(tournamentToDelete.Cancelled == true)
+
+                if (tournamentToDelete.Cancelled == true)
                 {
                     throw new Exception("Le tournoi a deja ete annulé");
                 }
@@ -112,11 +111,13 @@ namespace CheckMate.BLL.Services
         {
             User? user = await _userRepository.GetById(userId);
 
+            int nbPlayers = await GetAttendees(tournament);
+
             if (user is null || tournament is null)
             {
                 return new TournamentPlayerStatus
                 {
-                    NbPlayers = 0,
+                    NbPlayers = nbPlayers,
                     TounamentId = tournament.Id,
                     PlayerId = userId,
                     IsRegistered = false,
@@ -130,7 +131,7 @@ namespace CheckMate.BLL.Services
 
             return new TournamentPlayerStatus
             {
-                NbPlayers = await _tournamentRepository.GetAttendees(tournament),
+                NbPlayers = nbPlayers,
                 TounamentId = tournament.Id,
                 PlayerId = userId,
                 IsRegistered = isRegistered,
@@ -143,32 +144,22 @@ namespace CheckMate.BLL.Services
 
         public async Task<bool> Register(int tournamentId, int userId)
         {
-            Tournament? tournament = await _tournamentRepository.GetById(tournamentId);
+            Tournament? tournament = GetTournament(tournamentId).Result;
 
-            if (tournament == null)
-            {
-                throw new Exception("Le tournoi n'existe pas");
-            }
+            User user = GetUser(userId).Result;
 
-            User? user = await _userRepository.GetById(userId);
-
-            if (user == null)
-            {
-                throw new Exception("L'utilisateur n'existe pas");
-            }
-
-            if(tournament.EndRegistration < DateTime.Now)
+            if (tournament.EndRegistration < DateTime.Now)
             {
                 throw new Exception("Les inscriptions sont terminées");
             }
 
-            int attendees = await _tournamentRepository.GetAttendees(tournament);
+            int attendees = await GetAttendees(tournament);
 
             if (attendees >= tournament.MaxPlayers)
             {
                 throw new Exception("Le tournoi est complet");
             }
-
+            // TODO : Son age est calculé par rapport à la date de fin des inscriptions (c-à-d l’âge qu’il aura à la fin des inscriptions)
             TournamentCategory userCategory = await _userService.GetUserCategory(user);
             List<TournamentCategory> categories = await _categoryRepository.GetAll();
 
@@ -182,7 +173,123 @@ namespace CheckMate.BLL.Services
                 throw new Exception("L'utilisateur est deja inscrit");
             }
 
+            if (tournament.WomenOnly is true && user.Gender != 'F')
+            {
+                throw new Exception("Le tournoi est exclusivement pour les femmes");
+            }
+
             return await _tournamentRepository.Register(tournament, user);
+        }
+
+        public async Task<bool> Unregister(int tournamentId, int userId)
+        {
+            Tournament? tournament = GetTournament(tournamentId).Result;
+
+            User user = GetUser(userId).Result;
+
+            if (!await _tournamentRepository.IsRegistered(tournament, user))
+            {
+                throw new Exception("L'utilisateur n'est pas inscrit");
+            }
+
+            if (tournament.EndRegistration < DateTime.Now)
+            {
+                throw new Exception("Les inscriptions sont clôturées");
+            }
+
+            return await _tournamentRepository.Unregister(tournament, user);
+        }
+
+        public async Task<bool> Start(int tournamentId)
+        {
+            try
+            {
+                Tournament? tournament = GetTournament(tournamentId).Result;
+
+                if (tournament.MinPlayers < await GetAttendees(tournament))
+                {
+                    throw new Exception("Le tournoi n'a pas assez de joueurs");
+                }
+
+                if (tournament.EndRegistration < DateTime.Now)
+                {
+                    throw new Exception("Les inscriptions ne sont pas clôturées");
+                }
+
+                tournament.CurrentRound = 1;
+                tournament.UpdatedAt = DateTime.Now;
+
+                // TODO : générer les matchs
+                int attendees = GetAttendees(tournament).Result;
+                int nbRounds = attendees * 2 - 1;
+
+                int opponent = 0;
+
+                Game game = null;
+
+                for (int i = 0; i < nbRounds - 1; i++)
+                {
+                    for (int j = 0; j < attendees; j++)
+                    {
+                        opponent = (j + i) % attendees;
+
+                        if (opponent == j)
+                        {
+                            game = new Game()
+                            {
+                                TournamentId = tournament.Id,
+                                BlackId = j + 1,
+                                WhiteId = 0,
+                                Round = i + 1,
+                                Winner = 0,
+                            };
+                        }
+                        else
+                        {
+                            game = new Game()
+                            {
+                                TournamentId = tournament.Id,
+                                BlackId = j + 1,
+                                WhiteId = opponent + 1,
+                                Round = i + 1,
+                                Winner = 0,
+                            };
+                        }
+
+                        _gameRepository.Create(game);
+                    }
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                return false;
+            }
+        }
+
+        private async Task<User> GetUser(int userId)
+        {
+            User? user = await _userRepository.GetById(userId);
+
+            if (user == null)
+            {
+                throw new Exception("L'utilisateur n'existe pas");
+            }
+
+            return user;
+        }
+
+        private async Task<Tournament> GetTournament(int tournamentId)
+        {
+            Tournament? tournament = await _tournamentRepository.GetById(tournamentId);
+
+            if (tournament == null)
+            {
+                throw new Exception("Le tournoi n'existe pas");
+            }
+
+            return tournament;
         }
 
         private DateTime GetMinimumEndRegistrationDate(Tournament tournament)
@@ -190,7 +297,8 @@ namespace CheckMate.BLL.Services
             return DateTime.Now.AddDays(tournament.MinPlayers);
         }
 
-        private Task<int> GetAttendees(Tournament tournament) {
+        private Task<int> GetAttendees(Tournament tournament)
+        {
             return _tournamentRepository.GetAttendees(tournament);
         }
     }

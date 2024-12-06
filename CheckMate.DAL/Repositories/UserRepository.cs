@@ -198,11 +198,6 @@ namespace CheckMate.DAL.Repositories
         {
             try
             {
-                if (id <= 0)
-                {
-                    throw new Exception("L'Id n'existe pas");
-                }
-
                 SqlCommand command = _connection.CreateCommand();
 
                 command.CommandText = "SELECT [U].[Id], [U].[Username], [U].[Email], [U].[Date_of_birth], [U].[Gender], [U].[Elo], [R].[Id] AS [RoleId], [R].[Name] AS [RoleName] FROM [User] AS U " +

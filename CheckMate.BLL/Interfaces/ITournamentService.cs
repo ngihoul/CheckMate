@@ -9,6 +9,8 @@ namespace CheckMate.BLL.Interfaces
         public Task<Tournament>? Create(Tournament tournament, List<int> categoriesIds);
         public Task<bool> Delete(int id);
         public Task<bool> Register(int tournamentId, int userId);
+        public Task<bool> Unregister(int tournamentId, int userId);
+        public Task<bool> Start(int tournamentId);
         public Task<TournamentPlayerStatus> GetRegisterInfo(Tournament tournament, int userId);
     }
 }
