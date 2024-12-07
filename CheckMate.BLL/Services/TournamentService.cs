@@ -16,13 +16,15 @@ namespace CheckMate.BLL.Services
         private readonly ITournamentCategoryRepository _categoryRepository;
         private readonly ITournamentRepository _tournamentRepository;
         private readonly IUserRepository _userRepository;
+        private readonly IGameRepository _gameRepository;
         private readonly IUserService _userService;
 
-        public TournamentService(ITournamentCategoryRepository categoryRepository, ITournamentRepository tournamentRepository, IUserRepository userRepository, IUserService userService)
+        public TournamentService(ITournamentCategoryRepository categoryRepository, ITournamentRepository tournamentRepository, IUserRepository userRepository, IGameRepository gameRepository, IUserService userService)
         {
             _categoryRepository = categoryRepository;
             _tournamentRepository = tournamentRepository;
             _userRepository = userRepository;
+            _gameRepository = gameRepository;
             _userService = userService;
         }
 

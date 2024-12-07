@@ -13,14 +13,25 @@ namespace CheckMate.DAL.Repositories
             _connection = connection;
         }
 
-        public Task<Game> Create(Game game)
+        public async Task<Game> Create(Game game)
         {
-            SqlCommand sqlCommand = _connection.CreateCommand();
+            SqlCommand command = _connection.CreateCommand();
 
-            sqlCommand.CommandText = "INSERT INTO [Game] ([TournamentId], [WhiteId], [BlackId], [Round], [Winner]) " +
+            command.CommandText = "INSERT INTO [Game] ([TournamentId], [WhiteId], [BlackId], [Round], [Winner]) " +
                                     "OUTPUT Inserted.Id " +
-                                    // To check if 1 for Winner is ok
+                                    // TODO : To check if 1 for Winner is ok
                                     "VALUES (@TournamentId, @WhiteId, @BlackId, @Round, 1);";
+
+            command.Parameters.AddWithValue("TournamentId", game.TournamentId);
+            command.Parameters.AddWithValue("WhiteId", game.WhiteId);
+            command.Parameters.AddWithValue("BlackId", game.BlackId);
+            command.Parameters.AddWithValue("Round", game.Round);
+
+            await _connection.OpenAsync();
+            game.Id = (int)command.ExecuteScalar();
+            await _connection.CloseAsync();
+
+            return game;
         }
     }
 }
