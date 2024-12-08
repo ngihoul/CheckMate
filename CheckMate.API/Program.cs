@@ -125,6 +125,11 @@ app.Use(async (context, next) =>
     {
         await next.Invoke();
     }
+    catch(ArgumentNullException e)
+    {
+        context.Response.StatusCode = 400;
+        await context.Response.WriteAsJsonAsync(e.Message);
+    }
     catch (ArgumentException e)
     {
         context.Response.StatusCode = 404;

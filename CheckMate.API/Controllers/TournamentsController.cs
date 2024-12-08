@@ -10,6 +10,8 @@ namespace CheckMate.API.Controllers
 {
     // Middleware qui gère les erreurs et les différents types d'erreur
 
+    // TODO : change return BadRequest to a custom Exception
+
     [Route("api/[controller]")]
     [ApiController]
     public class TournamentsController : ControllerBase
@@ -22,11 +24,14 @@ namespace CheckMate.API.Controllers
         }
 
         [HttpGet("{id:int}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult<TournamentView>> Get([FromRoute] int id)
         {
-            Tournament tournament = await _tournamentService.GetById(id);
+            Tournament? tournament = await _tournamentService.GetById(id);
 
-            if(tournament is null)
+            if (tournament is null)
             {
                 throw new ArgumentException("Tournoi non trouvé");
             }
@@ -38,18 +43,19 @@ namespace CheckMate.API.Controllers
 
         [HttpGet]
         [Route("/api/tournaments/last")]
-        // TODO : check possible response codes
-        // TODO : tout passer en IEnumerable
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult<IEnumerable<TournamentViewList>>> GetLastTournament([FromQuery] TournamentFilters filters)
         {
             IEnumerable<Tournament> tournaments = await _tournamentService.GetLast(filters);
 
-            if(tournaments.Count() == 0)
+            if (tournaments.Count() == 0)
             {
-                throw new Exception("Aucun tournoi trouvé");
+                throw new ArgumentException("Aucun tournoi trouvé");
             }
 
-            IEnumerable<TournamentViewList> tournamentsView = tournaments.Select( t =>
+            IEnumerable<TournamentViewList> tournamentsView = tournaments.Select(t =>
             {
                 TournamentPlayerStatus playerStatus = GetPlayerStatus(t).Result;
                 return t.ToViewList(playerStatus);
@@ -59,72 +65,80 @@ namespace CheckMate.API.Controllers
         }
 
         [HttpPost]
+        [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<ActionResult<TournamentView>> Create([FromBody] TournamentCreateForm tournamentForm)
         {
 
             if (tournamentForm is null || !ModelState.IsValid)
             {
-                throw new ArgumentException("Données invalides");
+                return BadRequest(new { message = "Données invalides" });
             }
 
-            Tournament? tournamentToAdd = await _tournamentService.Create(tournamentForm.ToTournament(), tournamentForm.CategoriesIds);
+            Tournament tournamentToAdd = await _tournamentService.Create(tournamentForm.ToTournament(), tournamentForm.CategoriesIds);
 
-            return Ok(tournamentToAdd.ToView());
+            return StatusCode(201, tournamentToAdd.ToView());
 
         }
 
-        // TODO : check possible response codes 
         [HttpDelete("{id:int:min(1)}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult<bool>> Delete([FromRoute] int id)
         {
-            try
-            {
-                bool deleted = await _tournamentService.Delete(id);
+            bool deleted = await _tournamentService.Delete(id);
 
-                return deleted ? Ok(deleted) : BadRequest(new { message = "Une erreur est survenue lors de la suppression du tournoi" });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { message = ex.Message });
-            }
+            return deleted ? Ok(deleted) : BadRequest(new { message = "Une erreur est survenue lors de la suppression du tournoi" });
         }
 
         [HttpGet("{tournamentId:int:min(1)}/register/{userId:int:min(1)}")]
-        public async Task<bool> Register([FromRoute] int tournamentId, [FromRoute] int userId)
-        {
-            if(tournamentId <= 0 || userId <= 0)
-            {
-                throw new ArgumentException("Données invalides");
-            }
-
-            return await _tournamentService.Register(tournamentId, userId);
-        }
-
-        [HttpGet("{tournamentId:int:min(1)}/unregister/{userId:int:min(1)}")]
-        public async Task<bool> Unregister([FromRoute] int tournamentId, [FromRoute] int userId)
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<ActionResult<bool>> Register([FromRoute] int tournamentId, [FromRoute] int userId)
         {
             if (tournamentId <= 0 || userId <= 0)
             {
-                throw new ArgumentException("Données invalides");
+                return BadRequest(new { message = "Données invalides" });
             }
 
-            return await _tournamentService.Unregister(tournamentId, userId);
+            bool isRegistered = await _tournamentService.Register(tournamentId, userId);
+
+            return isRegistered ? Ok(isRegistered) : BadRequest(new { message = "Une erreur est survenue lors de l'inscription au tournoi" });
+        }
+
+        [HttpGet("{tournamentId:int:min(1)}/unregister/{userId:int:min(1)}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<ActionResult<bool>> Unregister([FromRoute] int tournamentId, [FromRoute] int userId)
+        {
+            if (tournamentId <= 0 || userId <= 0)
+            {
+                return BadRequest(new { message = "Données invalides" });
+            }
+
+            bool isUnregistered = await _tournamentService.Unregister(tournamentId, userId);
+
+            return isUnregistered ? Ok(isUnregistered) : BadRequest(new { message = "Une erreur est survenue lors de la désinscription au tournoi" });
         }
 
         [HttpGet("{tournamentId:int:min(1)}/start")]
-        public async Task<bool> Start([FromRoute] int tournamentId)
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<ActionResult<bool>> Start([FromRoute] int tournamentId)
         {
-            if(tournamentId <= 0)
+            if (tournamentId <= 0)
             {
-                throw new ArgumentException("Données invalides");
+                return BadRequest(new { message = "Données invalides" });
             }
 
-            return await _tournamentService.Start(tournamentId);
+            bool isStarted = await _tournamentService.Start(tournamentId);
+
+            return isStarted ? Ok(isStarted) : BadRequest(new { message = "Une erreur est survenue lors du lancement du tournoi" });
         }
 
         private async Task<TournamentPlayerStatus> GetPlayerStatus(Tournament tournament)

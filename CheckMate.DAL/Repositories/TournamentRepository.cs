@@ -49,7 +49,7 @@ namespace CheckMate.DAL.Repositories
                     command.Parameters.AddWithValue("Cancelled", tournament.Cancelled);
                     command.Parameters.AddWithValue("Cancelled_at", tournament.CancelledAt is null ? DBNull.Value : tournament.CancelledAt);
 
-                    tournament.Id = (int) await command.ExecuteScalarAsync();
+                    tournament.Id = (int)await command.ExecuteScalarAsync();
 
                     foreach (TournamentCategory category in tournament.Categories)
                     {
@@ -82,20 +82,20 @@ namespace CheckMate.DAL.Repositories
 
             // TODO : Add NbPlayers, isRegistered, canRegistered
 
-            command.CommandText = $"SELECT TOP({ (filters.Limit is not null ? "@Limit" : "10")  }) * FROM [Tournament] " +
+            command.CommandText = $"SELECT TOP({(filters.Limit is not null ? "@Limit" : "10")}) * FROM [Tournament] " +
                                   $"WHERE [Cancelled] = 0 AND [Status] != 3 " +
-                                  $"{ (filters.Name is not null ? "AND [Name] LIKE @Name " : "") }" +
-                                  $"{ (filters.Place is not null ? "AND [Place] LIKE @Place " : "") }" +
-                                  $"{ (filters.Status is not null ? "AND Status = @Status " : "") }" +
-                                  $"{ (filters.WomenOnly == true ? "AND WomenOnly = 1 " : "") }" +
-                                  $"{ (filters.CategoriesIds is not null ? "AND EXISTS (SELECT * FROM [MM_Tournament_Category] WHERE [MM_Tournament_Category].[TournamentId] = [Tournament].[Id] AND [MM_Tournament_Category].[CategoryId] IN (@CategoriesIds)) " : "") }" +
+                                  $"{(filters.Name is not null ? "AND [Name] LIKE @Name " : "")}" +
+                                  $"{(filters.Place is not null ? "AND [Place] LIKE @Place " : "")}" +
+                                  $"{(filters.Status is not null ? "AND Status = @Status " : "")}" +
+                                  $"{(filters.WomenOnly == true ? "AND WomenOnly = 1 " : "")}" +
+                                  $"{(filters.CategoriesIds is not null ? "AND EXISTS (SELECT * FROM [MM_Tournament_Category] WHERE [MM_Tournament_Category].[TournamentId] = [Tournament].[Id] AND [MM_Tournament_Category].[CategoryId] IN (@CategoriesIds)) " : "")}" +
                                   "ORDER BY [Updated_at] DESC";
 
-            if(filters.Limit is not null) command.Parameters.AddWithValue("@Limit", filters.Limit);
+            if (filters.Limit is not null) command.Parameters.AddWithValue("@Limit", filters.Limit);
             if (filters.Name is not null) command.Parameters.AddWithValue("@Name", $"%{filters.Name}%");
             if (filters.Place is not null) command.Parameters.AddWithValue("@Place", $"%{filters.Place}%");
             if (filters.Status is not null) command.Parameters.AddWithValue("@Status", filters.Status);
-            if(filters.CategoriesIds is not null) command.Parameters.AddWithValue("@CategoriesIds", string.Join(",", filters.CategoriesIds));
+            if (filters.CategoriesIds is not null) command.Parameters.AddWithValue("@CategoriesIds", string.Join(",", filters.CategoriesIds));
 
             await _connection.OpenAsync();
 
@@ -117,64 +117,51 @@ namespace CheckMate.DAL.Repositories
 
         public async Task<Tournament>? GetById(int id)
         {
-            try
+            if (id <= 0)
             {
-                if (id <= 0)
-                {
-                    throw new Exception("L'Id n'existe pas");
-                }
-
-                SqlCommand command = _connection.CreateCommand();
-
-                command.CommandText = "SELECT * FROM [Tournament] WHERE [Id] = @id";
-
-                command.Parameters.AddWithValue("id", id);
-
-                await _connection.OpenAsync();
-
-                IEnumerable<TournamentCategory> categories = await _repositoryCategory.GetByTournament(id);
-
-                Tournament? tournament = null;
-
-                using SqlDataReader reader = command.ExecuteReader();
-
-                if (reader.Read())
-                {
-                    tournament = TournamentMappers.TournamentWithCategories(reader, categories);
-                }
-
-                await _connection.CloseAsync();
-
-                return tournament;
+                throw new Exception("L'Id n'existe pas");
             }
-            catch (Exception ex)
+
+            SqlCommand command = _connection.CreateCommand();
+
+            command.CommandText = "SELECT * FROM [Tournament] WHERE [Id] = @id";
+
+            command.Parameters.AddWithValue("id", id);
+
+            await _connection.OpenAsync();
+
+            IEnumerable<TournamentCategory> categories = await _repositoryCategory.GetByTournament(id);
+
+            Tournament? tournament = null;
+
+            using SqlDataReader reader = command.ExecuteReader();
+
+            if (reader.Read())
             {
-                throw new Exception(ex.Message, ex);
+                tournament = TournamentMappers.TournamentWithCategories(reader, categories);
             }
+
+            await _connection.CloseAsync();
+
+            return tournament;
         }
 
         public async Task<bool> Delete(Tournament tournament)
         {
-            try
-            {
-                using SqlCommand command = _connection.CreateCommand();
-                // QUESTION : est-ce utile de transmettre tout l'objet Tournament ?
-                // TODO : Possibilité d utiliser delete(id) avec delete(tournament) Soit uniquement id par facilite (pas de select)
-                command.CommandText = "UPDATE [Tournament] SET [Cancelled] = 1, [Cancelled_at] = GETDATE() WHERE [Id] = @Id";
-                command.Parameters.AddWithValue("@Id", tournament.Id);
 
-                _connection.Open();
+            using SqlCommand command = _connection.CreateCommand();
+            // QUESTION : est-ce utile de transmettre tout l'objet Tournament ?
+            // TODO : Possibilité d utiliser delete(id) avec delete(tournament) Soit uniquement id par facilite (pas de select)
+            command.CommandText = "UPDATE [Tournament] SET [Cancelled] = 1, [Cancelled_at] = GETDATE() WHERE [Id] = @Id";
+            command.Parameters.AddWithValue("@Id", tournament.Id);
 
-                int rowsAffected = command.ExecuteNonQuery();
+            _connection.Open();
 
-                _connection.Close();
+            int rowsAffected = command.ExecuteNonQuery();
 
-                return rowsAffected == 1;
-            }
-            catch (Exception ex)
-            {
-                throw new Exception(ex.Message, ex);
-            }
+            _connection.Close();
+
+            return rowsAffected == 1;
         }
 
         public async Task<bool> Register(Tournament tournament, User user)

@@ -20,39 +20,32 @@ namespace CheckMate.API.Controllers
         }
 
         [HttpPost("api/register")]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult<UserView>> Create([FromBody] UserSelfRegistrationForm userForm)
         {
-            try
+            if (userForm is null || !ModelState.IsValid)
             {
-                if (userForm is null || !ModelState.IsValid)
-                {
-                    return BadRequest(new { message = "Données invalides" });
-                }
-
-                User? userToAdd = await _userService.Create(userForm.ToUser());
-
-                return Ok(userToAdd!.ToView());
+                throw new ArgumentNullException("Données invalides");
             }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { message = ex.Message });
-            }
+
+            User? userToAdd = await _userService.Create(userForm.ToUser());
+
+            return Ok(userToAdd!.ToView());
         }
 
         [HttpPost("api/login")]
         public async Task<ActionResult<string>> Login([FromBody] UserLoginForm userForm)
         {
-            if(userForm is null || !ModelState.IsValid)
+            if (userForm is null || !ModelState.IsValid)
             {
-                throw new ArgumentException("Données invalides");
+                throw new ArgumentNullException("Données invalides");
             }
 
             User? user = await _userService.Login(userForm.UsernameOrEmail, userForm.Password);
 
-            if(user is null)
+            if (user is null)
             {
                 throw new ArgumentException("Utilisateur non trouvé");
             }
@@ -63,32 +56,25 @@ namespace CheckMate.API.Controllers
         }
 
         [HttpPatch("api/username/{id}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult<UserView>> ChooseUsername([FromRoute] int id, [FromBody] UserChooseUsernameForm userForm)
         {
-            try
+            if (userForm is null || !ModelState.IsValid)
             {
-                if (userForm is null || !ModelState.IsValid)
-                {
-                    return BadRequest(new { message = "Données invalides" });
-                }
-
-                User? userToPatch = await _userService.ChooseUsername(id, userForm.ToUser());
-
-                if (userToPatch is null)
-                {
-                    return NotFound(new { message = "Utilisateur non trouvé" });
-                }
-
-                return Ok(userToPatch.ToView());
+                throw new ArgumentNullException("Données invalides");
             }
-            catch (Exception ex)
+
+            User? userToPatch = await _userService.ChooseUsername(id, userForm.ToUser());
+
+            if (userToPatch is null)
             {
-                return StatusCode(500, new { message = ex.Message });
+                throw new ArgumentException("Utilisateur non trouvé");
             }
+
+            return Ok(userToPatch.ToView());
         }
     }
 }

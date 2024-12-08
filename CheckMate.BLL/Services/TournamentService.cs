@@ -52,61 +52,48 @@ namespace CheckMate.BLL.Services
 
         public async Task<Tournament>? Create(Tournament tournament, IEnumerable<int> categoriesIds)
         {
-            try
+            if (tournament.MaxPlayers < tournament.MinPlayers)
             {
-                if (tournament.MaxPlayers < tournament.MinPlayers)
-                {
-                    throw new ArgumentException("Le maximum de joueurs doit etre supérieur ou égal au minimum de joueurs");
-                }
-
-                if (tournament.MaxElo < tournament.MinElo)
-                {
-                    throw new ArgumentException("Le max d'ELO doit etre superieur ou égal au min ELO");
-                }
-
-                DateTime minimumEndRegistrationDate = GetMinimumEndRegistrationDate(tournament);
-
-                if (tournament.EndRegistration < minimumEndRegistrationDate)
-                {
-                    throw new Exception($"La date de fin d'inscription doit etre superieur ou egal au {minimumEndRegistrationDate.ToString("dd/MM/yyyy")} ");
-                }
-
-                IEnumerable<TournamentCategory> categories = await _categoryRepository.GetAll();
-
-                tournament.Categories = categories.Where(c => categoriesIds.Contains(c.Id)).ToList();
-
-                // TODO : A la création d’un tournoi un email est envoyé à tous les joueurs qui respectent les contraintes du tournoi(v.inscriptions) pour les prévenir
-
-                return await _tournamentRepository.Create(tournament);
+                throw new ArgumentException("Le maximum de joueurs doit etre supérieur ou égal au minimum de joueurs");
             }
-            catch (Exception ex)
+
+            if (tournament.MaxElo < tournament.MinElo)
             {
-                throw new Exception(ex.Message);
+                throw new ArgumentException("Le max d'ELO doit etre superieur ou égal au min ELO");
             }
+
+            DateTime minimumEndRegistrationDate = GetMinimumEndRegistrationDate(tournament);
+
+            if (tournament.EndRegistration < minimumEndRegistrationDate)
+            {
+                throw new Exception($"La date de fin d'inscription doit etre superieur ou egal au {minimumEndRegistrationDate.ToString("dd/MM/yyyy")} ");
+            }
+
+            IEnumerable<TournamentCategory> categories = await _categoryRepository.GetAll();
+
+            tournament.Categories = categories.Where(c => categoriesIds.Contains(c.Id)).ToList();
+
+            // TODO : A la création d’un tournoi un email est envoyé à tous les joueurs qui respectent les contraintes du tournoi(v.inscriptions) pour les prévenir
+
+            return await _tournamentRepository.Create(tournament);
         }
 
         public async Task<bool> Delete(int id)
         {
-            try
+
+            Tournament? tournamentToDelete = GetTournament(id).Result;
+
+            if (tournamentToDelete.EndRegistration < DateTime.Now)
             {
-                Tournament? tournamentToDelete = GetTournament(id).Result;
-
-                if (tournamentToDelete.EndRegistration < DateTime.Now)
-                {
-                    throw new Exception("Les inscriptions étant terminées, il n'est pas possible d'annuler le tournoi");
-                }
-
-                if (tournamentToDelete.Cancelled == true)
-                {
-                    throw new Exception("Le tournoi a deja ete annulé");
-                }
-
-                return await _tournamentRepository.Delete(tournamentToDelete);
+                throw new Exception("Les inscriptions étant terminées, il n'est pas possible d'annuler le tournoi");
             }
-            catch (Exception ex)
+
+            if (tournamentToDelete.Cancelled == true)
             {
-                throw new Exception(ex.Message);
+                throw new Exception("Le tournoi a deja ete annulé");
             }
+
+            return await _tournamentRepository.Delete(tournamentToDelete);
         }
 
         public async Task<TournamentPlayerStatus> GetRegisterInfo(Tournament tournament, int userId)
@@ -226,7 +213,7 @@ namespace CheckMate.BLL.Services
 
             for (int i = 0; i < nbRounds; i++)
             {
-                for (int j = 0; j < attendees; j++) 
+                for (int j = 0; j < attendees; j++)
                 {
                     int opponent = (j + i) % attendees;
 
