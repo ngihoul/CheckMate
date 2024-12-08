@@ -10,8 +10,6 @@ namespace CheckMate.API.Controllers
 {
     // Middleware qui gère les erreurs et les différents types d'erreur
 
-    // TODO : change return BadRequest to a custom Exception
-
     [Route("api/[controller]")]
     [ApiController]
     public class TournamentsController : ControllerBase
@@ -73,7 +71,7 @@ namespace CheckMate.API.Controllers
 
             if (tournamentForm is null || !ModelState.IsValid)
             {
-                return BadRequest(new { message = "Données invalides" });
+                throw new ArgumentNullException("Données invalides");
             }
 
             Tournament tournamentToAdd = await _tournamentService.Create(tournamentForm.ToTournament(), tournamentForm.CategoriesIds);
@@ -101,7 +99,7 @@ namespace CheckMate.API.Controllers
         {
             if (tournamentId <= 0 || userId <= 0)
             {
-                return BadRequest(new { message = "Données invalides" });
+                throw new ArgumentNullException("Données invalides");
             }
 
             bool isRegistered = await _tournamentService.Register(tournamentId, userId);
@@ -117,7 +115,7 @@ namespace CheckMate.API.Controllers
         {
             if (tournamentId <= 0 || userId <= 0)
             {
-                return BadRequest(new { message = "Données invalides" });
+                throw new ArgumentNullException("Données invalides");
             }
 
             bool isUnregistered = await _tournamentService.Unregister(tournamentId, userId);
@@ -133,7 +131,7 @@ namespace CheckMate.API.Controllers
         {
             if (tournamentId <= 0)
             {
-                return BadRequest(new { message = "Données invalides" });
+                throw new ArgumentNullException("Données invalides");
             }
 
             bool isStarted = await _tournamentService.Start(tournamentId);
