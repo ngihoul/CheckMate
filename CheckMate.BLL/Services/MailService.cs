@@ -15,9 +15,9 @@ namespace CheckMate.BLL.Services
 
         public MailService(IConfiguration configuration)
         {
-            _noReplyName = configuration["Smtp:NoReply:Name"];
-            _noReplyEmail = configuration["Smtp:NoReply:Email"];
-            _smtpHost = configuration["Smtp:Host"];
+            _noReplyName = configuration["Smtp:NoReply:Name"]!;
+            _noReplyEmail = configuration["Smtp:NoReply:Email"]!;
+            _smtpHost = configuration["Smtp:Host"]!;
             _smtpPort = Convert.ToInt32(configuration["Smtp:Port"]);
         }
 
@@ -31,7 +31,7 @@ namespace CheckMate.BLL.Services
 
         public void SendMail(User user, string subject, string body)
         {
-            string username = user.Username;
+            string username = user.Username!;
 
             // Création du mail
             MimeMessage email = new MimeMessage();
