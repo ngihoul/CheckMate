@@ -21,7 +21,6 @@ namespace CheckMate.API.DTO
         public bool IsRegistered { get; set; }
     }
 
-    // TODO : A mettre à jour
     public class TournamentViewList
     {
         public int Id { get; set; }

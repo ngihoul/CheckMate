@@ -2,9 +2,6 @@
 using CheckMate.DAL.Mappers;
 using CheckMate.Domain.Models;
 using Microsoft.Data.SqlClient;
-using System.Transactions;
-
-// TODO : Try .. catch pas utile dans le repo si pas d'autre opération à part throw
 
 namespace CheckMate.DAL.Repositories
 {
@@ -117,6 +114,7 @@ namespace CheckMate.DAL.Repositories
 
         public async Task<Tournament>? GetById(int id)
         {
+            // TODO : check if necessary
             if (id <= 0)
             {
                 throw new Exception("L'Id n'existe pas");
@@ -217,7 +215,6 @@ namespace CheckMate.DAL.Repositories
 
             using SqlDataReader reader = command.ExecuteReader();
 
-            // TODO : Utiliser IEnumerable !!!
             if (reader.Read())
             {
                 result = true;

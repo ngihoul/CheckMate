@@ -11,7 +11,6 @@ namespace CheckMate.DAL.Interfaces
     public interface ITournamentCategoryRepository
     {
         public Task<IEnumerable<TournamentCategory>> GetAll();
-        // TODO : utiliser tournamentId
         public Task<IEnumerable<TournamentCategory>> GetByTournament(int tournamentId);
     }
 }
