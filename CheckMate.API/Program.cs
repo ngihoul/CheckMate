@@ -1,8 +1,6 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using CheckMate.BLL.Interfaces;
 using CheckMate.BLL.Services;
-using CheckMate.BLL.Interfaces;
-using CheckMate.BLL.Services;
 using CheckMate.DAL.Interfaces;
 using CheckMate.DAL.Repositories;
 using Microsoft.Data.SqlClient;
@@ -85,7 +83,6 @@ builder.Services.AddAuthentication(option =>
         ValidAudience = builder.Configuration["Jwt:Audience"],
 
         ValidateLifetime = true
-
     };
 });
 
