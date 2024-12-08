@@ -10,8 +10,8 @@ namespace CheckMate.DAL.Interfaces
 {
     public interface ITournamentCategoryRepository
     {
-        public Task<List<TournamentCategory>> GetAll();
+        public Task<IEnumerable<TournamentCategory>> GetAll();
         // TODO : utiliser tournamentId
-        public Task<List<TournamentCategory>> GetByTournament(int tournamentId);
+        public Task<IEnumerable<TournamentCategory>> GetByTournament(int tournamentId);
     }
 }

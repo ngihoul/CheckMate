@@ -34,7 +34,7 @@ namespace CheckMate.API.Controllers
 
                 User? userToAdd = await _userService.Create(userForm.ToUser());
 
-                return Ok(userToAdd.ToView());
+                return Ok(userToAdd!.ToView());
             }
             catch (Exception ex)
             {
@@ -67,7 +67,7 @@ namespace CheckMate.API.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<UserView?>> ChooseUsername([FromRoute] int id, [FromBody] UserChooseUsernameForm userForm)
+        public async Task<ActionResult<UserView>> ChooseUsername([FromRoute] int id, [FromBody] UserChooseUsernameForm userForm)
         {
             try
             {

@@ -14,7 +14,7 @@ namespace CheckMate.DAL.Repositories
             _connection = connection;
         }
 
-        public async Task<List<TournamentCategory>> GetAll()
+        public async Task<IEnumerable<TournamentCategory>> GetAll()
         {
             SqlCommand command = _connection.CreateCommand();
             List<TournamentCategory> categories = new List<TournamentCategory>();
@@ -42,7 +42,7 @@ namespace CheckMate.DAL.Repositories
             return categories;
         }
 
-        public async Task<List<TournamentCategory>> GetByTournament(int tournamentId)
+        public async Task<IEnumerable<TournamentCategory>> GetByTournament(int tournamentId)
         {
 
             List<TournamentCategory> categories = new List<TournamentCategory>();

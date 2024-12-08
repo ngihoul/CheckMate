@@ -42,9 +42,9 @@ namespace CheckMate.API.Controllers
         // TODO : tout passer en IEnumerable
         public async Task<ActionResult<IEnumerable<TournamentViewList>>> GetLastTournament([FromQuery] TournamentFilters filters)
         {
-            List<Tournament> tournaments = await _tournamentService.GetLast(filters);
+            IEnumerable<Tournament> tournaments = await _tournamentService.GetLast(filters);
 
-            if(tournaments.Count == 0)
+            if(tournaments.Count() == 0)
             {
                 throw new Exception("Aucun tournoi trouvé");
             }

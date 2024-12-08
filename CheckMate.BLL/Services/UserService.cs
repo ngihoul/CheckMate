@@ -177,8 +177,8 @@ namespace CheckMate.BLL.Services
 
         public async Task<TournamentCategory>GetUserCategory(User user)
         {
-            TournamentCategory userCategory = null;
-            List<TournamentCategory> categories = await _categoryRepository.GetAll();
+            TournamentCategory? userCategory = null;
+            IEnumerable<TournamentCategory> categories = await _categoryRepository.GetAll();
             int userAge = GetAge(user);
 
             if (userAge < 18)

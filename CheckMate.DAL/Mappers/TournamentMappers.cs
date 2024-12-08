@@ -6,7 +6,7 @@ namespace CheckMate.DAL.Mappers
     public static class TournamentMappers
     {
 
-        public static Tournament TournamentWithCategories(SqlDataReader reader, List<TournamentCategory> categories)
+        public static Tournament TournamentWithCategories(SqlDataReader reader, IEnumerable<TournamentCategory> categories)
         {
             Tournament tournament = new Tournament
             {

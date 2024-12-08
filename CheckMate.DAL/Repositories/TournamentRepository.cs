@@ -75,7 +75,7 @@ namespace CheckMate.DAL.Repositories
             }
         }
 
-        public async Task<List<Tournament>> GetLast(TournamentFilters filters)
+        public async Task<IEnumerable<Tournament>> GetLast(TournamentFilters filters)
         {
             SqlCommand command = _connection.CreateCommand();
             List<Tournament> tournaments = new List<Tournament>();
@@ -103,7 +103,7 @@ namespace CheckMate.DAL.Repositories
 
             while (reader.Read())
             {
-                List<TournamentCategory> categories = await _repositoryCategory.GetByTournament((int)reader["Id"]);
+                IEnumerable<TournamentCategory> categories = await _repositoryCategory.GetByTournament((int)reader["Id"]);
 
                 tournaments.Add(
                     TournamentMappers.TournamentWithCategories(reader, categories)
@@ -132,13 +132,12 @@ namespace CheckMate.DAL.Repositories
 
                 await _connection.OpenAsync();
 
-                List<TournamentCategory> categories = await _repositoryCategory.GetByTournament(id);
+                IEnumerable<TournamentCategory> categories = await _repositoryCategory.GetByTournament(id);
 
                 Tournament? tournament = null;
 
                 using SqlDataReader reader = command.ExecuteReader();
 
-                // TODO : Utiliser IEnumerable !!!
                 if (reader.Read())
                 {
                     tournament = TournamentMappers.TournamentWithCategories(reader, categories);
@@ -242,7 +241,7 @@ namespace CheckMate.DAL.Repositories
             return result;
         }
 
-        public async Task<int> GetAttendees(Tournament tournament)
+        public async Task<int> GetNbAttendees(Tournament tournament)
         {
             SqlCommand command = _connection.CreateCommand();
 

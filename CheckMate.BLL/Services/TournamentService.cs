@@ -45,12 +45,12 @@ namespace CheckMate.BLL.Services
             return tournament;
         }
 
-        public async Task<List<Tournament>> GetLast(TournamentFilters filters)
+        public async Task<IEnumerable<Tournament>> GetLast(TournamentFilters filters)
         {
             return await _tournamentRepository.GetLast(filters);
         }
 
-        public async Task<Tournament>? Create(Tournament tournament, List<int> categoriesIds)
+        public async Task<Tournament>? Create(Tournament tournament, IEnumerable<int> categoriesIds)
         {
             try
             {
@@ -71,7 +71,7 @@ namespace CheckMate.BLL.Services
                     throw new Exception($"La date de fin d'inscription doit etre superieur ou egal au {minimumEndRegistrationDate.ToString("dd/MM/yyyy")} ");
                 }
 
-                List<TournamentCategory> categories = await _categoryRepository.GetAll();
+                IEnumerable<TournamentCategory> categories = await _categoryRepository.GetAll();
 
                 tournament.Categories = categories.Where(c => categoriesIds.Contains(c.Id)).ToList();
 
@@ -113,7 +113,7 @@ namespace CheckMate.BLL.Services
         {
             User? user = await _userRepository.GetById(userId);
 
-            int nbPlayers = await GetAttendees(tournament);
+            int nbPlayers = await GetNbAttendees(tournament);
 
             if (user is null || tournament is null)
             {
@@ -155,7 +155,7 @@ namespace CheckMate.BLL.Services
                 throw new Exception("Les inscriptions sont terminées");
             }
 
-            int attendees = await GetAttendees(tournament);
+            int attendees = await GetNbAttendees(tournament);
 
             if (attendees >= tournament.MaxPlayers)
             {
@@ -163,7 +163,7 @@ namespace CheckMate.BLL.Services
             }
             // TODO : Son age est calculé par rapport à la date de fin des inscriptions (c-à-d l’âge qu’il aura à la fin des inscriptions)
             TournamentCategory userCategory = await _userService.GetUserCategory(user);
-            List<TournamentCategory> categories = await _categoryRepository.GetAll();
+            IEnumerable<TournamentCategory> categories = await _categoryRepository.GetAll();
 
             if (!categories.Any(c => c.Id == userCategory!.Id))
             {
@@ -204,71 +204,53 @@ namespace CheckMate.BLL.Services
 
         public async Task<bool> Start(int tournamentId)
         {
-            try
+            Tournament? tournament = await GetTournament(tournamentId);
+            int attendees = await GetNbAttendees(tournament);
+
+            if (tournament.MinPlayers > attendees)
             {
-                Tournament? tournament = GetTournament(tournamentId).Result;
+                throw new Exception("Le tournoi n'a pas assez de joueurs");
+            }
 
-                if (tournament.MinPlayers < await GetAttendees(tournament))
+            if (tournament.EndRegistration < DateTime.Now)
+            {
+                throw new Exception("Les inscriptions ne sont pas clôturées");
+            }
+
+            tournament.CurrentRound = 1;
+            tournament.UpdatedAt = DateTime.Now;
+
+            // TODO : get list of players registered
+
+            int nbRounds = 2 * (attendees - 1);
+
+            for (int i = 0; i < nbRounds; i++)
+            {
+                for (int j = 0; j < attendees; j++) 
                 {
-                    throw new Exception("Le tournoi n'a pas assez de joueurs");
-                }
+                    int opponent = (j + i) % attendees;
 
-                if (tournament.EndRegistration < DateTime.Now)
-                {
-                    throw new Exception("Les inscriptions ne sont pas clôturées");
-                }
-
-                tournament.CurrentRound = 1;
-                tournament.UpdatedAt = DateTime.Now;
-
-                // TODO : générer les matchs
-                int attendees = GetAttendees(tournament).Result;
-                int nbRounds = attendees * 2 - 1;
-
-                int opponent = 0;
-
-                Game game = null;
-
-                for (int i = 0; i < nbRounds - 1; i++)
-                {
-                    for (int j = 0; j < attendees; j++)
+                    if (opponent != j)
                     {
-                        opponent = (j + i) % attendees;
-
-                        if (opponent == j)
+                        Game game = new Game()
                         {
-                            game = new Game()
-                            {
-                                TournamentId = tournament.Id,
-                                BlackId = j + 1,
-                                WhiteId = 0,
-                                Round = i + 1,
-                                Winner = 0,
-                            };
-                        }
-                        else
-                        {
-                            game = new Game()
-                            {
-                                TournamentId = tournament.Id,
-                                BlackId = j + 1,
-                                WhiteId = opponent + 1,
-                                Round = i + 1,
-                                Winner = 0,
-                            };
-                        }
+                            TournamentId = tournament.Id,
+                            BlackId = j + 1,
+                            WhiteId = opponent + 1,
+                            Round = i + 1,
+                            Winner = 0,
+                        };
 
-                        _gameRepository.Create(game);
+                        await _gameRepository.Create(game);
                     }
                 }
+            }
 
-                return true;
-            }
-            catch (Exception ex)
-            {
-                return false;
-            }
+            // await _tournamentRepository.Update(tournament);
+
+            return true;
         }
+
 
         private async Task<User> GetUser(int userId)
         {
@@ -299,9 +281,9 @@ namespace CheckMate.BLL.Services
             return DateTime.Now.AddDays(tournament.MinPlayers);
         }
 
-        private Task<int> GetAttendees(Tournament tournament)
+        private Task<int> GetNbAttendees(Tournament tournament)
         {
-            return _tournamentRepository.GetAttendees(tournament);
+            return _tournamentRepository.GetNbAttendees(tournament);
         }
     }
 }

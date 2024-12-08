@@ -11,7 +11,7 @@ namespace CheckMate.API.DTO
         public int? NbPlayers { get; set; }
         public int MinPlayers { get; set; }
         public int MaxPlayers { get; set; }
-        public List<TournamentCategory>? Categories { get; set; }
+        public IEnumerable<TournamentCategory>? Categories { get; set; }
         public int? MinElo { get; set; }
         public int? MaxElo { get; set; }
         public int? Status { get; set; }
@@ -30,7 +30,7 @@ namespace CheckMate.API.DTO
         public int NbPlayers { get; set; }
         public int MinPlayers { get; set; }
         public int MaxPlayers { get; set; }
-        public List<TournamentCategory>? Categories { get; set; }
+        public IEnumerable<TournamentCategory>? Categories { get; set; }
         public int? MinElo { get; set; }
         public int? MaxElo { get; set; }
         public int? Status { get; set; }
@@ -62,7 +62,7 @@ namespace CheckMate.API.DTO
         public int? MaxElo { get; set; }
 
         [Required]
-        public List<int> CategoriesIds { get; set; }
+        public IEnumerable<int>? CategoriesIds { get; set; }
 
         [Required]
         public bool WomenOnly { get; set; }
@@ -77,7 +77,7 @@ namespace CheckMate.API.DTO
         public string? Name { get; set; }
         [DataType(DataType.Text)]
         public string? Place { get; set; }
-        public List<int>? CategoriesIds { get; set; }
+        public IEnumerable<int>? CategoriesIds { get; set; }
         [Range(1,3)]
         public int? Status { get; set; }
         public bool? WomenOnly { get; set; }
