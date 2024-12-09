@@ -10,5 +10,7 @@ namespace CheckMate.DAL.Interfaces
     public interface IGameRepository
     {
         public Task<Game> Create(Game game);
+        public Task<Game> GetById(int id);
+        public Task<bool> PatchScore(Game game);
     }
 }

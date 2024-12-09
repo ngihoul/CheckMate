@@ -8,6 +8,11 @@ namespace CheckMate.Domain.Models
 {
     public class Game
     {
+        public const int NOT_PLAYED = 1;
+        public const int WINNER_WHITE = 2;
+        public const int WINNER_BLACK = 3;
+        public const int DRAW = 4;
+
         public int Id { get; set; }
         public int TournamentId { get; set; }
         public int WhiteId { get; set; }

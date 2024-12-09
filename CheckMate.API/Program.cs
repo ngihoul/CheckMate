@@ -61,6 +61,7 @@ builder.Services.AddScoped<ITournamentCategoryRepository, TournamentCategoryRepo
 builder.Services.AddScoped<IRoleRepository, RoleRepository>();
 
 builder.Services.AddScoped<IGameRepository, GameRepository>();
+builder.Services.AddScoped<IGameService, GameService>();
 
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<MailService>();

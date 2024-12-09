@@ -33,5 +33,55 @@ namespace CheckMate.DAL.Repositories
 
             return game;
         }
+
+        public async Task<Game?> GetById(int id)
+        {
+            SqlCommand command = _connection.CreateCommand();
+
+            command.CommandText = "SELECT * FROM [Game] WHERE [Id] = @id;";
+
+            command.Parameters.AddWithValue("id", id);
+
+            await _connection.OpenAsync();
+
+            Game? game = null;
+
+            using SqlDataReader reader = await command.ExecuteReaderAsync();
+
+            if (reader.Read())
+            {
+                game = new Game()
+                {
+                    Id = (int)reader["Id"],
+                    TournamentId = (int)reader["TournamentId"],
+                    WhiteId = (int)reader["WhiteId"],
+                    BlackId = (int)reader["BlackId"],
+                    Round = Convert.ToInt32(reader["Round"]),
+                    Winner = Convert.ToInt32(reader["Winner"])
+                };
+            }
+
+            await _connection.CloseAsync();
+
+            return game;
+        }
+
+        public async Task<bool> PatchScore(Game game)
+        {
+            SqlCommand command = _connection.CreateCommand();
+
+            command.CommandText = "UPDATE [Game] SET [Winner] = @winner WHERE [Id] = @id;";
+
+            command.Parameters.AddWithValue("id", game.Id);
+            command.Parameters.AddWithValue("winner", game.Winner);
+
+            await _connection.OpenAsync();
+
+            int rowsAffected = command.ExecuteNonQuery();
+
+            await _connection.CloseAsync();
+
+            return rowsAffected == 1;
+        }
     }
 }

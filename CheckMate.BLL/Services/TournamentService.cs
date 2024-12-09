@@ -26,7 +26,7 @@ namespace CheckMate.BLL.Services
         {
             if (id <= 0)
             {
-                throw new ArgumentNullException("L'id du tournoi doit etre superieur a zéro");
+                throw new ArgumentNullException("L'id du tournoi doit etre supérieur a zéro");
             }
 
             Tournament? tournament = await _tournamentRepository.GetById(id);

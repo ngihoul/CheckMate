@@ -3,6 +3,7 @@ using CheckMate.BLL.Interfaces;
 using CheckMate.API.Mappers;
 using CheckMate.Domain.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Http;
 using System.Security.Claims;
 using Azure.Identity;
 
