@@ -17,6 +17,10 @@ namespace CheckMate.API.Controllers
         }
 
         [HttpPost("{gameId:int:min(1)}/score/{winner:int:min(1)}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult<Game>> setScore(int gameId, int winner)
         {
             Game gameToUpdate = await _gameService.GetById(gameId);

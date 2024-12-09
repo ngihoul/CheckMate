@@ -36,6 +36,9 @@ namespace CheckMate.API.Controllers
         }
 
         [HttpPost("api/login")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult<string>> Login([FromBody] UserLoginForm userForm)
         {
             if (userForm is null || !ModelState.IsValid)
@@ -47,7 +50,7 @@ namespace CheckMate.API.Controllers
 
             if (user is null)
             {
-                throw new ArgumentException("Utilisateur non trouvé");
+                throw new ArgumentNullException("Données invalides");
             }
 
             string token = _authService.GenerateToken(user);

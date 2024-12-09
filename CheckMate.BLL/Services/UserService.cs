@@ -133,13 +133,6 @@ namespace CheckMate.BLL.Services
             return user;
         }
 
-        private bool isEmail(string email)
-        {
-            Regex emailRegex = new Regex("^\\S+@\\S+\\.\\S+$");
-
-            return emailRegex.IsMatch(email);
-        }
-
         public int GetAge(User user)
         {
             int age = 0;
@@ -174,6 +167,13 @@ namespace CheckMate.BLL.Services
             }
 
             return userCategory;
+        }
+
+        private bool isEmail(string email)
+        {
+            Regex emailRegex = new Regex("^\\S+@\\S+\\.\\S+$");
+
+            return emailRegex.IsMatch(email);
         }
     }
 }
