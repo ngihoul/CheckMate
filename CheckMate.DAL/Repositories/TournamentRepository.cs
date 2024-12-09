@@ -144,6 +144,26 @@ namespace CheckMate.DAL.Repositories
             return tournament;
         }
 
+        public async Task<Tournament?> Update(int id, Tournament tournament)
+        {
+            using SqlCommand command = _connection.CreateCommand();
+            command.CommandText = "UPDATE [Tournament] " +
+                                  "SET [Current_round] = @Current_round, [Status] = @Status, [Updated_at] = GETDATE() " +
+                                  "WHERE [Id] = @Id;";
+
+            command.Parameters.AddWithValue("@Current_round", tournament.CurrentRound);
+            command.Parameters.AddWithValue("@Status", tournament.Status);
+            command.Parameters.AddWithValue("@Id", id);
+
+            await _connection.OpenAsync();
+
+            int rowsAffected = command.ExecuteNonQuery();
+
+            await _connection.CloseAsync();
+
+            return rowsAffected == 1 ? tournament : null;
+                                       
+        }
         public async Task<bool> Delete(Tournament tournament)
         {
 
@@ -225,27 +245,54 @@ namespace CheckMate.DAL.Repositories
             return result;
         }
 
-        public async Task<int> GetNbAttendees(Tournament tournament)
+        public async Task<IEnumerable<User>> GetAttendees(Tournament tournament)
         {
             SqlCommand command = _connection.CreateCommand();
 
-            command.CommandText = "SELECT COUNT(*) AS [Attendees] FROM [MM_Tournament_Registration] WHERE [TournamentId] = @tournamentId;";
+            command.CommandText = "SELECT [U].[Id], [U].[Username], [U].[Email], [U].[Date_of_birth], [U].[Gender], [U].[Elo] FROM [MM_Tournament_Registration] AS TR " +
+                                  "INNER JOIN [User] AS U ON TR.[UserId] = U.[Id] " +
+                                  "WHERE [TournamentId] = @tournamentId;";
 
             command.Parameters.AddWithValue("tournamentId", tournament.Id);
 
             await _connection.OpenAsync();
-            int result = 0;
+
+            IEnumerable<User> users = new List<User>();
 
             using SqlDataReader reader = command.ExecuteReader();
 
-            if (reader.Read())
-            {
-                result = (int)reader["Attendees"];
+            while (reader.Read()) {
+                users = users.Append(
+                    UserMappers.User(reader)
+                );
             }
 
             await _connection.CloseAsync();
 
-            return result;
+            return users;
+        }
+
+        public async Task<int> GetNbAttendees(Tournament tournament)
+        {
+            SqlCommand command = _connection.CreateCommand();
+
+            command.CommandText = "SELECT COUNT(*) AS [attendes] FROM [MM_Tournament_Registration] WHERE [TournamentId] = @tournamentId;";
+
+            command.Parameters.AddWithValue("tournamentId", tournament.Id);
+
+            await _connection.OpenAsync();
+
+            int nbAttendees = 0;
+
+            using SqlDataReader reader = command.ExecuteReader();
+
+            if (reader.Read()) {
+                nbAttendees = (int)reader["attendes"];
+            }
+
+            await _connection.CloseAsync();
+
+            return nbAttendees;
         }
     }
 }

@@ -186,52 +186,75 @@ namespace CheckMate.BLL.Services
         public async Task<bool> Start(int tournamentId)
         {
             Tournament? tournament = await GetTournament(tournamentId);
-            int attendees = await GetNbAttendees(tournament);
+            IEnumerable<User> attendees = await _tournamentRepository.GetAttendees(tournament);
+            List<User> attendeesList = attendees.ToList(); // Facilite l'accès par index
+            int nbAttendees = attendeesList.Count;
 
-            if (tournament.MinPlayers > attendees)
+            if (tournament.Cancelled == true)
+            {
+                throw new Exception("Le tournoi a été annulé");
+            }
+
+            if(tournament.Status != Tournament.STATUS_WAITING_PLAYERS)
+            {
+                throw new Exception("Le tournoi est déjà lancé");
+            }
+
+            if (tournament.MinPlayers > nbAttendees)
             {
                 throw new Exception("Le tournoi n'a pas assez de joueurs");
             }
 
-            if (tournament.EndRegistration < DateTime.Now)
+            if (tournament.EndRegistration > DateTime.Now)
             {
                 throw new Exception("Les inscriptions ne sont pas clôturées");
             }
 
-            tournament.CurrentRound = 1;
-            tournament.UpdatedAt = DateTime.Now;
-
-            // TODO : get list of players registered
-
-            int nbRounds = 2 * (attendees - 1);
-
-            for (int i = 0; i < nbRounds; i++)
+            if (nbAttendees % 2 != 0)
             {
-                for (int j = 0; j < attendees; j++)
+                attendeesList.Add(new User
                 {
-                    int opponent = (j + i) % attendees;
+                    Id = 0,
+                    Username = "BYE"
+                });
+                nbAttendees++;
+            }
 
-                    if (opponent != j)
+            int nbRounds = 2 * (nbAttendees - 1);
+
+            for (int round = 0; round < nbRounds; round++)
+            {
+                for (int i = 0; i < nbAttendees / 2; i++)
+                {
+                    User player1 = attendeesList[i];
+                    User player2 = attendeesList[nbAttendees - 1 - i];
+
+                    if (player1.Id != 0 && player2.Id != 0)
                     {
-                        Game game = new Game()
+                        Game game = new Game
                         {
-                            TournamentId = tournament.Id,
-                            BlackId = j + 1,
-                            WhiteId = opponent + 1,
-                            Round = i + 1,
-                            Winner = 0,
+                            TournamentId = tournamentId,
+                            BlackId = round % 2 == 0 ? player1.Id : player2.Id,
+                            WhiteId = round % 2 == 0 ? player2.Id : player1.Id,
+                            Round = round + 1
                         };
 
                         await _gameRepository.Create(game);
                     }
                 }
+
+                User lastPlayer = attendeesList[nbAttendees - 1];
+                attendeesList.RemoveAt(nbAttendees - 1);
+                attendeesList.Insert(1, lastPlayer);
             }
 
-            // await _tournamentRepository.Update(tournament);
+            tournament.CurrentRound = 1;
+            tournament.Status = Tournament.STATUS_IN_PROGRESS;
+
+            await _tournamentRepository.Update(tournamentId, tournament);
 
             return true;
         }
-
 
         private async Task<User> GetUser(int userId)
         {

@@ -2,6 +2,10 @@
 {
     public class Tournament
     {
+        public const int STATUS_WAITING_PLAYERS = 1;
+        public const int STATUS_IN_PROGRESS = 2;
+        public const int STATUS_TERMINATED = 3;
+
         public int Id { get; set; }
         public string Name { get; set; }
         public string? Place { get; set; }

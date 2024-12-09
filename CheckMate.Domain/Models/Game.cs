@@ -13,6 +13,6 @@ namespace CheckMate.Domain.Models
         public int WhiteId { get; set; }
         public int BlackId { get; set; }
         public int Round { get; set; }
-        public int Winner { get; set; }
+        public int Winner { get; set; } // 1 = not played, 2 = white, 3 = black, 4 = draw
     }
 }
