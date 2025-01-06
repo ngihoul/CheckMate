@@ -9,11 +9,15 @@ namespace CheckMate.DAL.Repositories
     {
         private readonly SqlConnection _connection;
         private readonly ITournamentCategoryRepository _repositoryCategory;
+        private readonly IUserRepository _userRepository;
+        private readonly IGameRepository _gameRepository;
 
-        public TournamentRepository(SqlConnection connection, ITournamentCategoryRepository repositoryCategory)
+        public TournamentRepository(SqlConnection connection, ITournamentCategoryRepository repositoryCategory, IUserRepository userRepository, IGameRepository gameRepository)
         {
             _connection = connection;
             _repositoryCategory = repositoryCategory;
+            _userRepository = userRepository;
+            _gameRepository = gameRepository;
         }
 
         public async Task<Tournament>? Create(Tournament tournament)
@@ -24,7 +28,7 @@ namespace CheckMate.DAL.Repositories
             {
                 try
                 {
-                    SqlCommand command = _connection.CreateCommand();
+                    using SqlCommand command = _connection.CreateCommand();
                     command.Transaction = transaction;
 
                     command.CommandText = "INSERT INTO [Tournament] ([Name], [Place], [Min_players], [Max_players], [Min_elo], [Max_elo], [Status], [Current_round], [Women_only], [End_registration], [Created_at], [Updated_at], [Cancelled], [Cancelled_at]) " +
@@ -72,9 +76,9 @@ namespace CheckMate.DAL.Repositories
             }
         }
 
-        public async Task<IEnumerable<Tournament>> GetLast(TournamentFilters filters)
+        public async Task<List<Tournament>> GetLast(TournamentFilters filters)
         {
-            SqlCommand command = _connection.CreateCommand();
+            using SqlCommand command = _connection.CreateCommand();
             List<Tournament> tournaments = new List<Tournament>();
 
             // TODO : Add NbPlayers, isRegistered, canRegistered
@@ -102,6 +106,7 @@ namespace CheckMate.DAL.Repositories
             {
                 IEnumerable<TournamentCategory> categories = await _repositoryCategory.GetByTournament((int)reader["Id"]);
 
+                //yield return (
                 tournaments.Add(
                     TournamentMappers.TournamentWithCategories(reader, categories)
                 );
@@ -120,7 +125,7 @@ namespace CheckMate.DAL.Repositories
                 throw new Exception("L'Id n'existe pas");
             }
 
-            SqlCommand command = _connection.CreateCommand();
+            using SqlCommand command = _connection.CreateCommand();
 
             command.CommandText = "SELECT * FROM [Tournament] WHERE [Id] = @id";
 
@@ -129,6 +134,10 @@ namespace CheckMate.DAL.Repositories
             await _connection.OpenAsync();
 
             IEnumerable<TournamentCategory> categories = await _repositoryCategory.GetByTournament(id);
+
+            IEnumerable<User> players = await _userRepository.GetByTournament(id);
+
+            IEnumerable<Game> games = await _gameRepository.GetByTournament(id);
 
             Tournament? tournament = null;
 
@@ -139,9 +148,69 @@ namespace CheckMate.DAL.Repositories
                 tournament = TournamentMappers.TournamentWithCategories(reader, categories);
             }
 
+            tournament.Players = players;
+            tournament.Games = games;
+
             await _connection.CloseAsync();
 
             return tournament;
+        }
+
+        public async Task<List<TournamentResult>> GetResult(Tournament tournament, int? round = 0)
+        {
+            using SqlCommand command = _connection.CreateCommand();
+
+            command.CommandText = "SELECT [u].[Username], " +
+                                    "COUNT(CASE WHEN [g].[Winner] != 1 THEN 1 ELSE NULL END) AS [NbGames], " +
+                                    "SUM(CASE WHEN [g].[Winner] = 2 AND [g].[WhiteId] = [u].[Id] THEN 1 WHEN [g].[Winner] = 3 AND [g].[BlackId] = [u].[Id] THEN 1 ELSE 0 END) AS [Wins], " +
+                                    "SUM(CASE WHEN [g].[Winner] = 3 AND [g].[WhiteId] = [u].[Id] THEN 1 WHEN [g].[Winner] = 2 AND [g].[BlackId] = [u].[Id] THEN 1 ELSE 0 END) AS [Losses], " +
+                                    "SUM(CASE WHEN [g].[Winner] = 4 THEN 1 ELSE 0 END) AS [Draws], " +
+                                    "SUM(CASE " +
+                                        "WHEN [g].[Winner] = 2 AND [g].[WhiteId] = [u].[Id] THEN 1 " +
+                                        "WHEN [g].[Winner] = 3 AND [g].[BlackId] = [u].[Id] THEN 1 " +
+                                        "WHEN [g].[Winner] = 4 THEN 0.5 " +
+                                        "ELSE 0 " +
+                                    "END) AS [Score] " +
+                                    "FROM " +
+                                        "[User] AS [u] " +
+                                    "LEFT JOIN " +
+                                        "[Game] AS [g] ON [u].[Id] = [g].[WhiteId] OR [u].[Id] = [g].[BlackId] " +
+                                    $"WHERE [TournamentId] = @Id {(round == 0 ? "" : $"AND [Round] = @Round")} " +
+                                    "GROUP BY " +
+                                        "[u].[Username] " +
+                                    "ORDER BY [Score] DESC, [Wins] DESC, [Draws] DESC, [Losses] DESC";
+
+            if (round > 0)
+            {
+                command.Parameters.AddWithValue("Round", round);
+            }
+
+            command.Parameters.AddWithValue("Id", tournament.Id);
+
+            await _connection.OpenAsync();
+
+            List<TournamentResult> results = new List<TournamentResult>();
+
+            using SqlDataReader reader = await command.ExecuteReaderAsync();
+
+            while (reader.Read())
+            {
+                results.Add(
+                    new TournamentResult()
+                    {
+                        Username = (string)reader["Username"],
+                        nbGames = (int)reader["NbGames"],
+                        Wins = (int)reader["Wins"],
+                        Losses = (int)reader["Losses"],
+                        Draws = (int)reader["Draws"],
+                        Score = (decimal)reader["Score"]
+                    }
+                );
+            }
+
+            await _connection.CloseAsync();
+
+            return results;
         }
 
         public async Task<Tournament?> Update(int id, Tournament tournament)
@@ -162,8 +231,9 @@ namespace CheckMate.DAL.Repositories
             await _connection.CloseAsync();
 
             return rowsAffected == 1 ? tournament : null;
-                                       
+
         }
+
         public async Task<bool> Delete(Tournament tournament)
         {
 
@@ -184,7 +254,7 @@ namespace CheckMate.DAL.Repositories
 
         public async Task<bool> Register(Tournament tournament, User user)
         {
-            SqlCommand command = _connection.CreateCommand();
+            using SqlCommand command = _connection.CreateCommand();
 
             command.CommandText = "INSERT INTO [MM_Tournament_Registration] ([TournamentId], [UserId]) " +
                                   "OUTPUT Inserted.Id " +
@@ -202,9 +272,10 @@ namespace CheckMate.DAL.Repositories
             // QUESTION : que renvoie-t-il si erreur ?
             return registrationId > 0;
         }
+
         public async Task<bool> Unregister(Tournament tournament, User user)
         {
-            SqlCommand command = _connection.CreateCommand();
+            using SqlCommand command = _connection.CreateCommand();
 
             command.CommandText = "DELETE FROM [MM_Tournament_Registration] WHERE [TournamentId] = @tournamentId AND [UserId] = @userId;";
 
@@ -222,7 +293,7 @@ namespace CheckMate.DAL.Repositories
 
         public async Task<bool> IsRegistered(Tournament tournament, User user)
         {
-            SqlCommand command = _connection.CreateCommand();
+            using SqlCommand command = _connection.CreateCommand();
 
             command.CommandText = "SELECT * FROM [MM_Tournament_Registration] WHERE [TournamentId] = @tournamentId AND [UserId] = @userId;";
 
@@ -247,7 +318,7 @@ namespace CheckMate.DAL.Repositories
 
         public async Task<IEnumerable<User>> GetAttendees(Tournament tournament)
         {
-            SqlCommand command = _connection.CreateCommand();
+            using SqlCommand command = _connection.CreateCommand();
 
             command.CommandText = "SELECT [U].[Id], [U].[Username], [U].[Email], [U].[Date_of_birth], [U].[Gender], [U].[Elo] FROM [MM_Tournament_Registration] AS TR " +
                                   "INNER JOIN [User] AS U ON TR.[UserId] = U.[Id] " +
@@ -261,7 +332,8 @@ namespace CheckMate.DAL.Repositories
 
             using SqlDataReader reader = command.ExecuteReader();
 
-            while (reader.Read()) {
+            while (reader.Read())
+            {
                 users = users.Append(
                     UserMappers.User(reader)
                 );
@@ -274,7 +346,7 @@ namespace CheckMate.DAL.Repositories
 
         public async Task<int> GetNbAttendees(Tournament tournament)
         {
-            SqlCommand command = _connection.CreateCommand();
+            using SqlCommand command = _connection.CreateCommand();
 
             command.CommandText = "SELECT COUNT(*) AS [attendes] FROM [MM_Tournament_Registration] WHERE [TournamentId] = @tournamentId;";
 
@@ -286,13 +358,38 @@ namespace CheckMate.DAL.Repositories
 
             using SqlDataReader reader = command.ExecuteReader();
 
-            if (reader.Read()) {
+            if (reader.Read())
+            {
                 nbAttendees = (int)reader["attendes"];
             }
 
             await _connection.CloseAsync();
 
             return nbAttendees;
+        }
+
+        public async Task<int> GetMaxRound(Tournament tournament)
+        {
+            using SqlCommand command = _connection.CreateCommand();
+
+            command.CommandText = "SELECT MAX([Round]) AS [Max_Round] FROM [Game] WHERE [TournamentId] = @tournamentId;";
+
+            command.Parameters.AddWithValue("tournamentId", tournament.Id);
+
+            await _connection.OpenAsync();
+
+            int maxRound = 0;
+
+            using SqlDataReader reader = command.ExecuteReader();
+
+            if (reader.Read())
+            {
+                maxRound = Convert.ToInt32(reader["Max_Round"]);
+            }
+
+            await _connection.CloseAsync();
+
+            return maxRound;
         }
     }
 }

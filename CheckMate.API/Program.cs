@@ -57,6 +57,7 @@ builder.Services.AddScoped<ITournamentRepository, TournamentRepository>();
 builder.Services.AddScoped<ITournamentService, TournamentService>();
 
 builder.Services.AddScoped<ITournamentCategoryRepository, TournamentCategoryRepository>();
+builder.Services.AddScoped<ITournamentCategoryService, TournamentCategoryService>();
 
 builder.Services.AddScoped<IRoleRepository, RoleRepository>();
 
@@ -128,6 +129,12 @@ app.Use(async (context, next) =>
         context.Response.StatusCode = 400;
         await context.Response.WriteAsJsonAsync(e.Message);
     }
+    catch (UnauthorizedAccessException e)
+    {
+        context.Response.StatusCode = 401;
+        await context.Response.WriteAsJsonAsync(e.Message);
+    }
+    // TODO : Catch error 403
     catch (ArgumentException e)
     {
         context.Response.StatusCode = 404;
@@ -144,3 +151,5 @@ app.Use(async (context, next) =>
 app.MapControllers();
 
 app.Run();
+
+// Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6IjUxIiwiaHR0cDovL3NjaGVtYXMueG1sc29hcC5vcmcvd3MvMjAwNS8wNS9pZGVudGl0eS9jbGFpbXMvbmFtZSI6Im5naWhvdWwiLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9lbWFpbGFkZHJlc3MiOiJuZ2lob3VsQGhvdG1haWwuY29tIiwiaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS93cy8yMDA4LzA2L2lkZW50aXR5L2NsYWltcy9yb2xlIjoiQWRtaW4iLCJSb2xlIjoiQWRtaW4iLCJleHAiOjE3MzM3NTkwOTIsImlzcyI6IkNoZWNrTWF0ZSIsImF1ZCI6IkFuZ3VsYXJfQ2hlY2tNYXRlX09ubHkifQ.d4RIYCKIxOh9UuGsLbPyf1dtU7uhVkJy3EGKFwUAMik

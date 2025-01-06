@@ -16,7 +16,7 @@
         public int? MaxElo { get; set; }
         public IEnumerable<TournamentCategory>? Categories { get; set; }
         public int? Status { get; set; } = 1; // 1 = En attente de joueurs, 2 = En cours, 3 = Terminé
-        public int? CurrentRound { get; set; } = 0;
+        public int CurrentRound { get; set; } = 0;
         public bool WomenOnly { get; set; } = false;
         public DateTime EndRegistration { get; set; } // >= created_at + min_players
         public DateTime? CreatedAt { get; set; }
@@ -24,7 +24,7 @@
         public bool Cancelled { get; set; } = false;
         public DateTime? CancelledAt { get; set; }
         public IEnumerable<User>? Players { get; set; }
-        // public IEnumerable<Games>? Games { get; set; }
+        public IEnumerable<Game>? Games { get; set; }
     }
 
     public class TournamentPlayerStatus
@@ -46,5 +46,15 @@
         public bool? WomenOnly { get; set; }
         public int? Limit { get; set; }
         public int? Page { get; set; }
+    }
+
+    public class TournamentResult
+    {
+        public string Username { get; set; }
+        public int nbGames { get; set; }
+        public int Wins { get; set; }
+        public int Losses { get; set; }
+        public int Draws { get; set; }
+        public decimal Score { get; set; }
     }
 }

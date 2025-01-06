@@ -51,10 +51,12 @@ namespace CheckMate.BLL.Services
             List<Claim> claims = new List<Claim>()
             {
                 new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                new Claim(ClaimTypes.Name, user.Username!),
+                new Claim(ClaimTypes.Name, user.Username ?? ""),
                 new Claim(ClaimTypes.Email, user.Email),
                 new Claim(ClaimTypes.Role, user.Role.Name),
-                new Claim("Role", user.Role.Name)
+                new Claim("Username", user.Username ?? ""),
+                new Claim("Id", user.Id.ToString()),
+                new Claim("Role", user.Role.Name),
             };
 
             SymmetricSecurityKey key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]!));

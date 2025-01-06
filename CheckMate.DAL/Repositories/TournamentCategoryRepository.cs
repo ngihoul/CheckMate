@@ -16,7 +16,7 @@ namespace CheckMate.DAL.Repositories
 
         public async Task<IEnumerable<TournamentCategory>> GetAll()
         {
-            SqlCommand command = _connection.CreateCommand();
+            using SqlCommand command = _connection.CreateCommand();
             List<TournamentCategory> categories = new List<TournamentCategory>();
 
             command.CommandText = "SELECT * FROM [Tournament_category]";
@@ -47,7 +47,7 @@ namespace CheckMate.DAL.Repositories
 
             List<TournamentCategory> categories = new List<TournamentCategory>();
 
-            SqlCommand command = _connection.CreateCommand();
+            using SqlCommand command = _connection.CreateCommand();
 
             command.CommandText = "SELECT * FROM [MM_Tournament_Category] AS TC " +
                                   "JOIN [Tournament_category] AS C ON TC.CategoryId = C.Id " +

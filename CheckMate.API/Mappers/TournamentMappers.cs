@@ -39,7 +39,9 @@ namespace CheckMate.API.Mappers
                 CurrentRound = tournament.CurrentRound,
                 EndRegistration = tournament.EndRegistration,
                 CanRegister = playerStatus?.CanRegister ?? false,
-                IsRegistered = playerStatus?.IsRegistered ?? false
+                IsRegistered = playerStatus?.IsRegistered ?? false,
+                Players = tournament.Players,
+                Games = tournament.Games
             };
         }
 

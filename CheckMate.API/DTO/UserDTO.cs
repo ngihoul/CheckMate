@@ -72,12 +72,20 @@ namespace CheckMate.API.DTO
         public string Gender { get; set; }
     }
 
-    public class UserChooseUsernameForm
+    public class UserInitAccountForm
     {
         [Required]
         [MinLength(3)]
         [MaxLength(100)]
         public string Username { get; set; }
+
+        [Required]
+        [RegularExpression(@"^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{8,}$")]
+        public string Password { get; set; }
+
+        [Required]
+        [Compare("Password")]
+        public string CheckPassword { get; set; }
     }
 
     public class UserLoginForm

@@ -10,6 +10,8 @@ namespace CheckMate.DAL.Interfaces
         public Task<User?> GetByUsername(string username);
         public Task<User?> GetByUsernameForLogin(string username);
         public Task<User?> GetById(int id);
+        public Task<List<User>> GetByCategories(IEnumerable<TournamentCategory> categories);
+        public Task<List<User>> GetByTournament(int tournamentId);
         public Task<User?> Patch(User user);
     }
 }

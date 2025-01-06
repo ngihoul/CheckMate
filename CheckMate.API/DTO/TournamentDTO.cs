@@ -19,6 +19,8 @@ namespace CheckMate.API.DTO
         public DateTime EndRegistration { get; set; }
         public bool CanRegister { get; set; }
         public bool IsRegistered { get; set; }
+        public IEnumerable<User>? Players { get; set; }
+        public IEnumerable<Game>? Games { get; set; }
     }
 
     public class TournamentViewList

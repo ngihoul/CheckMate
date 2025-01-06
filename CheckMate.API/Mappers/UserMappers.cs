@@ -26,11 +26,12 @@ namespace CheckMate.API.Mappers
                 Gender = Convert.ToChar(userForm.Gender)
             };
         }
-        public static User ToUser(this UserChooseUsernameForm userForm)
+        public static User ToUser(this UserInitAccountForm userForm)
         {
             return new User
             {
-                Username = userForm.Username
+                Username = userForm.Username,
+                Password = userForm.Password
             };
         }
 

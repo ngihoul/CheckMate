@@ -10,7 +10,8 @@ namespace CheckMate.DAL.Interfaces
     public interface ITournamentRepository
     {
         public Task<Tournament>? GetById(int id);
-        public Task<IEnumerable<Tournament>> GetLast(TournamentFilters filters);
+        public Task<List<Tournament>> GetLast(TournamentFilters filters);
+        public Task<List<TournamentResult>> GetResult(Tournament tournament, int? round = 0);
         public Task<Tournament>? Create(Tournament tournament);
         public Task<Tournament?> Update(int id, Tournament tournament);
         public Task<bool> Delete(Tournament tournament); 
@@ -19,5 +20,6 @@ namespace CheckMate.DAL.Interfaces
         public Task<bool> IsRegistered(Tournament tournament, User user);
         public Task<IEnumerable<User>> GetAttendees(Tournament tournament);
         public Task<int> GetNbAttendees(Tournament tournament);
+        public Task<int> GetMaxRound(Tournament tournament);
     }
 }

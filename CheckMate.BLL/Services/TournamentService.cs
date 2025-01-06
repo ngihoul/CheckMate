@@ -12,14 +12,16 @@ namespace CheckMate.BLL.Services
         private readonly IUserRepository _userRepository;
         private readonly IGameRepository _gameRepository;
         private readonly IUserService _userService;
+        private readonly MailService _mailService;
 
-        public TournamentService(ITournamentCategoryRepository categoryRepository, ITournamentRepository tournamentRepository, IUserRepository userRepository, IGameRepository gameRepository, IUserService userService)
+        public TournamentService(ITournamentCategoryRepository categoryRepository, ITournamentRepository tournamentRepository, IUserRepository userRepository, IGameRepository gameRepository, IUserService userService, MailService mailService)
         {
             _categoryRepository = categoryRepository;
             _tournamentRepository = tournamentRepository;
             _userRepository = userRepository;
             _gameRepository = gameRepository;
             _userService = userService;
+            _mailService = mailService;
         }
 
         public async Task<Tournament>? GetById(int id)
@@ -67,15 +69,30 @@ namespace CheckMate.BLL.Services
 
             tournament.Categories = categories.Where(c => categoriesIds.Contains(c.Id)).ToList();
 
-            // TODO : A la création d’un tournoi un email est envoyé à tous les joueurs qui respectent les contraintes du tournoi(v.inscriptions) pour les prévenir
+            // TODO : Créer une méthode qui check si le joueur est eligible (women, categories & ELO).
+            // TODO : refaire envoi de mail aux joueurs eligibles
+
+            /*IEnumerable<User> prospects = _userService.GetByCategories(tournament.Categories);
+
+            foreach (User prospect in prospects)
+            {
+                _mailService.SendMail(prospect, "Nouveau tournoi pour vous", "Un nouveau tournoi qui pourrait vous intéresser a été ajouté.");
+            }*/
 
             return await _tournamentRepository.Create(tournament);
+        }
+        
+        public async Task<IEnumerable<TournamentResult>> GetResult(int tournamentId, int? round = 0)
+        {
+            Tournament? tournament = await GetTournament(tournamentId);
+
+            return await _tournamentRepository.GetResult(tournament, round);
         }
 
         public async Task<bool> Delete(int id)
         {
 
-            Tournament? tournamentToDelete = GetTournament(id).Result;
+            Tournament? tournamentToDelete = await GetTournament(id);
 
             if (tournamentToDelete.EndRegistration < DateTime.Now)
             {
@@ -127,7 +144,7 @@ namespace CheckMate.BLL.Services
 
         public async Task<bool> Register(int tournamentId, int userId)
         {
-            Tournament? tournament = GetTournament(tournamentId).Result;
+            Tournament? tournament = await GetTournament(tournamentId);
 
             User user = GetUser(userId).Result;
 
@@ -156,9 +173,14 @@ namespace CheckMate.BLL.Services
                 throw new Exception("L'utilisateur est deja inscrit");
             }
 
-            if (tournament.WomenOnly is true && user.Gender != 'F')
+            if (tournament.WomenOnly is true && (user.Gender != 'F' || user.Gender != 'O'))
             {
                 throw new Exception("Le tournoi est exclusivement pour les femmes");
+            }
+
+            if(tournament.MinElo > user.Elo || tournament.MaxElo < user.Elo)
+            {
+                throw new Exception("Vous devez avoir un ELO entre " + tournament.MinElo + " et " + tournament.MaxElo);
             }
 
             return await _tournamentRepository.Register(tournament, user);
@@ -166,7 +188,7 @@ namespace CheckMate.BLL.Services
 
         public async Task<bool> Unregister(int tournamentId, int userId)
         {
-            Tournament? tournament = GetTournament(tournamentId).Result;
+            Tournament? tournament = await GetTournament(tournamentId);
 
             User user = GetUser(userId).Result;
 
@@ -205,10 +227,10 @@ namespace CheckMate.BLL.Services
                 throw new Exception("Le tournoi n'a pas assez de joueurs");
             }
 
-            if (tournament.EndRegistration > DateTime.Now)
+            /*if (tournament.EndRegistration > DateTime.Now)
             {
                 throw new Exception("Les inscriptions ne sont pas clôturées");
-            }
+            }*/
 
             if (nbAttendees % 2 != 0)
             {
@@ -256,6 +278,41 @@ namespace CheckMate.BLL.Services
             return true;
         }
 
+        public async Task<Tournament> NextRound(int tournamentId)
+        {
+            Tournament? tournament = await GetTournament(tournamentId);
+
+            if (tournament.Status == Tournament.STATUS_WAITING_PLAYERS)
+            {
+                throw new Exception("Le tournoi n'a pas encore commencé");
+            }
+
+            if(tournament.Status == Tournament.STATUS_TERMINATED)
+            {
+                throw new Exception("Le tournoi est déjà clôturé");
+            }
+
+            bool allRoundsAreCompleted = await AllRoundsAreCompleted(tournament);
+
+            if (allRoundsAreCompleted is false)
+            {
+                throw new Exception("La manche n'est pas encore clôturée. Complétez les scores manquants.");
+            }
+
+            tournament.CurrentRound++;
+
+            int maxRound = await _tournamentRepository.GetMaxRound(tournament);
+
+            if (maxRound + 1 == tournament.CurrentRound)
+            {
+                tournament.Status = Tournament.STATUS_TERMINATED;
+            }
+
+            Tournament tournamentUpdated = await _tournamentRepository.Update(tournament.Id, tournament);
+
+            return tournamentUpdated;
+        }
+
         private async Task<User> GetUser(int userId)
         {
             User? user = await _userRepository.GetById(userId);
@@ -288,6 +345,21 @@ namespace CheckMate.BLL.Services
         private Task<int> GetNbAttendees(Tournament tournament)
         {
             return _tournamentRepository.GetNbAttendees(tournament);
+        }
+
+        private async Task<bool> AllRoundsAreCompleted(Tournament tournament) {
+            IEnumerable<Game> roundGames = await _gameRepository.GetByRound(tournament.Id, tournament.CurrentRound);
+
+            bool completed = true;
+
+            foreach (Game game in roundGames) {
+                if(game.Winner == Game.NOT_PLAYED)
+                {
+                    completed = false;
+                }
+            }
+
+            return completed;
         }
     }
 }

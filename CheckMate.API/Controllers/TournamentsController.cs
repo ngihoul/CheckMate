@@ -6,11 +6,10 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
 using System.Security.Claims;
 using Azure.Identity;
+using Microsoft.AspNetCore.Authorization;
 
 namespace CheckMate.API.Controllers
 {
-    // Middleware qui gère les erreurs et les différents types d'erreur
-
     [Route("api/[controller]")]
     [ApiController]
     public class TournamentsController : ControllerBase
@@ -23,6 +22,7 @@ namespace CheckMate.API.Controllers
         }
 
         [HttpGet("{id:int}")]
+        [AllowAnonymous]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -41,7 +41,7 @@ namespace CheckMate.API.Controllers
         }
 
         [HttpGet]
-        [Route("/api/tournaments/last")]
+        [AllowAnonymous]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -64,8 +64,11 @@ namespace CheckMate.API.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "Admin")]
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult<TournamentView>> Create([FromBody] TournamentCreateForm tournamentForm)
         {
@@ -82,8 +85,11 @@ namespace CheckMate.API.Controllers
         }
 
         [HttpDelete("{id:int:min(1)}")]
+        [Authorize(Roles = "Admin")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult<bool>> Delete([FromRoute] int id)
         {
@@ -92,9 +98,11 @@ namespace CheckMate.API.Controllers
             return deleted ? Ok(deleted) : BadRequest(new { message = "Une erreur est survenue lors de la suppression du tournoi" });
         }
 
-        [HttpGet("{tournamentId:int:min(1)}/register/{userId:int:min(1)}")]
+        [HttpPost("{tournamentId:int:min(1)}/register/{userId:int:min(1)}")]
+        [Authorize]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult<bool>> Register([FromRoute] int tournamentId, [FromRoute] int userId)
         {
@@ -108,9 +116,11 @@ namespace CheckMate.API.Controllers
             return isRegistered ? Ok(isRegistered) : BadRequest(new { message = "Une erreur est survenue lors de l'inscription au tournoi" });
         }
 
-        [HttpGet("{tournamentId:int:min(1)}/unregister/{userId:int:min(1)}")]
+        [HttpPost("{tournamentId:int:min(1)}/unregister/{userId:int:min(1)}")]
+        [Authorize]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult<bool>> Unregister([FromRoute] int tournamentId, [FromRoute] int userId)
         {
@@ -124,9 +134,12 @@ namespace CheckMate.API.Controllers
             return isUnregistered ? Ok(isUnregistered) : BadRequest(new { message = "Une erreur est survenue lors de la désinscription au tournoi" });
         }
 
-        [HttpGet("{tournamentId:int:min(1)}/start")]
+        [HttpPost("{tournamentId:int:min(1)}/start")]
+        [Authorize(Roles = "Admin")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult<bool>> Start([FromRoute] int tournamentId)
         {
@@ -138,6 +151,45 @@ namespace CheckMate.API.Controllers
             bool isStarted = await _tournamentService.Start(tournamentId);
 
             return isStarted ? Ok(isStarted) : BadRequest(new { message = "Une erreur est survenue lors du lancement du tournoi" });
+        }
+
+        [HttpPost("{tournamentId:int:min(1)}/nextRound")]
+        [Authorize(Roles = "Admin")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<ActionResult<bool>> NextRound([FromRoute] int tournamentId)
+        {
+            if (tournamentId <= 0)
+            {
+                throw new ArgumentNullException("Données invalides");
+            }
+
+            Tournament tournament = await _tournamentService.NextRound(tournamentId);
+
+            if (tournament is null)
+            {
+                throw new Exception("Une erreur est survenue lors de la mise à jour du tournoi");
+            }
+
+            return Ok(tournament);
+        }
+
+        [HttpGet("{tournamentId:int:min(1)}/result")]
+        [AllowAnonymous]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<ActionResult<IEnumerable<TournamentResult>>> GetResult([FromRoute] int tournamentId, [FromQuery] int? round = 0) {
+            if (tournamentId <= 0)
+            {
+                throw new ArgumentNullException("Données invalides");
+            }
+
+            IEnumerable<TournamentResult> results = await _tournamentService.GetResult(tournamentId, round);
+
+            return Ok(results );
         }
 
         private async Task<TournamentPlayerStatus> GetPlayerStatus(Tournament tournament)

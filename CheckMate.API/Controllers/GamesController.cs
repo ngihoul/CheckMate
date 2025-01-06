@@ -2,6 +2,7 @@
 using CheckMate.Domain.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Authorization;
 
 namespace CheckMate.API.Controllers
 {
@@ -17,8 +18,11 @@ namespace CheckMate.API.Controllers
         }
 
         [HttpPost("{gameId:int:min(1)}/score/{winner:int:min(1)}")]
+        [Authorize(Roles = "Admin")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult<Game>> setScore(int gameId, int winner)

@@ -11,6 +11,8 @@ namespace CheckMate.DAL.Interfaces
     {
         public Task<Game> Create(Game game);
         public Task<Game> GetById(int id);
+        public Task<IEnumerable<Game>> GetByRound(int tournamentId, int roundId);
+        public Task<List<Game>> GetByTournament(int tournamentId);
         public Task<bool> PatchScore(Game game);
     }
 }

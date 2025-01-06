@@ -98,7 +98,7 @@ namespace CheckMate.BLL.Services
             return userToAdd;
         }
 
-        public async Task<User?> ChooseUsername(int id, User user)
+        public async Task<User?> InitAccount(int id, User user)
         {
             User? userToPatch = await _userRepository.GetById(id);
 
@@ -108,8 +108,19 @@ namespace CheckMate.BLL.Services
             }
 
             userToPatch.Username = user.Username;
+            userToPatch.Salt = _authService.GenerateSalt();
+            userToPatch.Password = _authService.HashPassword(user.Password, userToPatch.Salt);
 
             return await _userRepository.Patch(userToPatch);
+        }
+        public async Task<List<User>> GetByCategories(IEnumerable<TournamentCategory> categories)
+        {
+            if(categories.Count() <= 0)
+            {
+                throw new ArgumentNullException("Les categories ne peuvent pas etre null");
+            }
+
+            return await _userRepository.GetByCategories(categories);
         }
 
         public async Task<User?> Login(string usernameOrEmail, string password)

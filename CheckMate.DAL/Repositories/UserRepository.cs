@@ -188,17 +188,79 @@ namespace CheckMate.DAL.Repositories
 
             using SqlCommand command = _connection.CreateCommand();
             command.CommandText = @"UPDATE [User] 
-                                        SET Username = @Username 
+                                        SET [Username] = @Username, [Salt] = @Salt, [Password] = @Password
                                         WHERE Id = @Id";
 
             command.Parameters.AddWithValue("@Id", user.Id);
             command.Parameters.AddWithValue("@Username", user.Username);
+            command.Parameters.AddWithValue("@Salt", user.Salt);
+            command.Parameters.AddWithValue("@Password", user.Password);
 
             await _connection.OpenAsync();
             int rowsAffected = command.ExecuteNonQuery();
             await _connection.CloseAsync();
 
             return rowsAffected > 0 ? user : null;
+        }
+
+        public async Task<List<User>> GetByCategories(IEnumerable<TournamentCategory> categories)
+        {
+            SqlCommand command = _connection.CreateCommand();
+            List<User> users = new List<User>();
+
+            command.CommandText = "SELECT [U].[Id], [U].[Username], [U].[Email], [U].[Date_of_birth], [U].[Gender], [U].[Elo], [R].[Id] AS [RoleId], [R].[Name] AS [RoleName] FROM [User] AS U " +
+                                  "JOIN [Role] AS R ON [U].[RoleId] = [R].[Id] " +
+                                  "WHERE [U].[Id] IS NOT NULL " +
+                                  $"AND {(categories.Where(c => c.Name == "Junior").Any() ? "[U].[Date_of_birth] < @minus18yo " : "")} " +
+                                  $"AND {(categories.Where(c => c.Name == "Senior").Any() ? "AND [U].[Date_of_birth] BETWEEN @minus18yo AND @minus60yo " : "")} " +
+                                  $"AND {(categories.Where(c => c.Name == "Veteran").Any() ? "AND [U].[Date_of_birth] > @minus60yo " : "")}";
+
+            command.Parameters.AddWithValue("@minus18yo", DateTime.Now.AddYears(-18).Date);
+            command.Parameters.AddWithValue("@minus60yo", DateTime.Now.AddYears(-60).Date);
+
+            await _connection.OpenAsync();
+
+            using SqlDataReader reader = await command.ExecuteReaderAsync();
+
+            while (reader.Read())
+            {
+                users.Add(
+                    UserMappers.UserWithRole(reader)
+                );
+            }
+
+            await _connection.CloseAsync();
+
+            return users;
+        }
+
+        public async Task<List<User>> GetByTournament(int tournamentId)
+        {
+            using SqlCommand command = _connection.CreateCommand();
+
+            command.CommandText = "SELECT [U].[Id], [U].[Username], [U].[Email], [U].[Date_of_birth], [U].[Gender], [U].[Elo], [R].[Id] AS [RoleId], [R].[Name] AS [RoleName] FROM [User] AS U " +
+                                  "JOIN [Role] AS R ON [U].[RoleId] = [R].[Id] " +
+                                  "JOIN [MM_Tournament_Registration] AS TR ON [U].[Id] = [TR].[UserId] " +
+                                  "WHERE [TR].[TournamentId] = @TournamentId";
+
+            command.Parameters.AddWithValue("TournamentId", tournamentId);
+
+            await _connection.OpenAsync();
+
+            List<User> users = new List<User>();
+
+            using SqlDataReader reader = command.ExecuteReader();
+
+            while (reader.Read())
+            {
+                users.Add(
+                    UserMappers.UserWithRole(reader)
+                );
+            }
+
+            await _connection.CloseAsync();
+
+            return users;
         }
     }
 }

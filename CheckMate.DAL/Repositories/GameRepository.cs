@@ -15,7 +15,7 @@ namespace CheckMate.DAL.Repositories
 
         public async Task<Game> Create(Game game)
         {
-            SqlCommand command = _connection.CreateCommand();
+            using SqlCommand command = _connection.CreateCommand();
 
             command.CommandText = "INSERT INTO [Game] ([TournamentId], [WhiteId], [BlackId], [Round], [Winner]) " +
                                     "OUTPUT Inserted.Id " +
@@ -36,7 +36,7 @@ namespace CheckMate.DAL.Repositories
 
         public async Task<Game?> GetById(int id)
         {
-            SqlCommand command = _connection.CreateCommand();
+            using SqlCommand command = _connection.CreateCommand();
 
             command.CommandText = "SELECT * FROM [Game] WHERE [Id] = @id;";
 
@@ -66,9 +66,77 @@ namespace CheckMate.DAL.Repositories
             return game;
         }
 
+        public async Task<List<Game>> GetByTournament(int tournamentId)
+        {
+            using SqlCommand command = _connection.CreateCommand();
+
+            command.CommandText = "SELECT * FROM [Game] WHERE [TournamentId] = @tournamentId;";
+
+            command.Parameters.AddWithValue("tournamentId", tournamentId);
+
+            await _connection.OpenAsync();
+
+            List<Game> games = new List<Game>();
+
+            using SqlDataReader reader = await command.ExecuteReaderAsync();
+
+            while (reader.Read())
+            {
+                games.Add(
+                    new Game()
+                    {
+                        Id = (int)reader["Id"],
+                        TournamentId = (int)reader["TournamentId"],
+                        WhiteId = (int)reader["WhiteId"],
+                        BlackId = (int)reader["BlackId"],
+                        Round = Convert.ToInt32(reader["Round"]),
+                        Winner = Convert.ToInt32(reader["Winner"])
+                    }
+                );
+            }
+
+            await _connection.CloseAsync();
+
+            return games;
+        }
+
+        public async Task<IEnumerable<Game>> GetByRound(int rournamentId, int roundId)
+        {
+            using SqlCommand command = _connection.CreateCommand();
+
+            command.CommandText = "SELECT * FROM [Game] WHERE [TournamentId] = @tournamentId AND [Round] = @round;";
+
+            command.Parameters.AddWithValue("tournamentId", rournamentId);
+            command.Parameters.AddWithValue("round", roundId);
+
+            await _connection.OpenAsync();
+
+            IEnumerable<Game> games = new List<Game>();
+
+            using SqlDataReader reader = await command.ExecuteReaderAsync();
+
+            while (reader.Read()) {
+                games.Append(
+                    new Game()
+                    {
+                        Id = (int)reader["Id"],
+                        TournamentId = (int)reader["TournamentId"],
+                        WhiteId = (int)reader["WhiteId"],
+                        BlackId = (int)reader["BlackId"],
+                        Round = Convert.ToInt32(reader["Round"]),
+                        Winner = Convert.ToInt32(reader["Winner"])
+                    }
+                );
+            }
+
+            await _connection.CloseAsync();
+
+            return games;
+        }
+
         public async Task<bool> PatchScore(Game game)
         {
-            SqlCommand command = _connection.CreateCommand();
+            using SqlCommand command = _connection.CreateCommand();
 
             command.CommandText = "UPDATE [Game] SET [Winner] = @winner WHERE [Id] = @id;";
 

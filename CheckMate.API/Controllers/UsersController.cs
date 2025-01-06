@@ -4,6 +4,8 @@ using CheckMate.API.Mappers;
 using CheckMate.BLL.Services;
 using CheckMate.Domain.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 
 namespace CheckMate.API.Controllers
 {
@@ -20,6 +22,7 @@ namespace CheckMate.API.Controllers
         }
 
         [HttpPost("api/register")]
+        [AllowAnonymous]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -36,6 +39,7 @@ namespace CheckMate.API.Controllers
         }
 
         [HttpPost("api/login")]
+        [AllowAnonymous]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -58,19 +62,22 @@ namespace CheckMate.API.Controllers
             return Ok(token);
         }
 
-        [HttpPatch("api/username/{id}")]
+        [HttpPatch("api/init-account/{id}")]
+        [Authorize]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<UserView>> ChooseUsername([FromRoute] int id, [FromBody] UserChooseUsernameForm userForm)
+        public async Task<ActionResult<UserView>> InitAccount([FromRoute] int id, [FromBody] UserInitAccountForm userForm)
         {
             if (userForm is null || !ModelState.IsValid)
             {
                 throw new ArgumentNullException("Données invalides");
             }
 
-            User? userToPatch = await _userService.ChooseUsername(id, userForm.ToUser());
+            User? userToPatch = await _userService.InitAccount(id, userForm.ToUser());
 
             if (userToPatch is null)
             {
@@ -78,6 +85,25 @@ namespace CheckMate.API.Controllers
             }
 
             return Ok(userToPatch.ToView());
+        }
+
+        [HttpPost("api/invite")]
+        [Authorize]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<ActionResult<User?>> Invite([FromBody] UserAdminRegistrationForm userForm)
+        {
+            if (userForm is null || !ModelState.IsValid)
+            {
+                throw new ArgumentNullException("Données invalides");
+            }
+
+            User? userToAdd = await _userService.CreateByAdmin(userForm.ToUser());
+
+            return Ok(userToAdd);
         }
     }
 }
